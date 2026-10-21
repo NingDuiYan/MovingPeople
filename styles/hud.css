@@ -9,6 +9,7 @@
   --c-neon-magenta:  #ff2d95;   /* 霓虹粉 */
   --c-text:          #d7f9ff;   /* 主文字 */
   --c-dim:           #6d9aa6;   /* 暗文 */
+  --c-dim-bright:    #9dc3cf;   /* 次级文字:深色玻璃面板上更易读 */
   --c-grid:          rgba(0, 240, 255, 0.08);
   --radius-panel:    14px;
   --gap:             14px;
@@ -30,7 +31,13 @@ body {
 #app { position: fixed; inset: 0; overflow: hidden; }
 /* 作者样式的 display 会压过 UA 的 [hidden],这里显式兜底 */
 [hidden] { display: none !important; }
-#scene { display: block; width: 100%; height: 100%; }
+/* 自由转动模式:鼠标只管转视角,画面上不画准星、也不显示系统光标(面板/HUD 各有自己的光标) */
+#scene { display: block; width: 100%; height: 100%; cursor: none; }
+/* 拖拽模式换成抓取手势,提示「要按住才转」 */
+body.look-drag #scene { cursor: grab; }
+body.look-drag #scene:active { cursor: grabbing; }
+/* 按住 ALT 放开光标的那一下,光标得看得见才能去点界面 */
+body.look-paused #scene { cursor: default; }
 
 /* 字体别名 */
 .font-mono   { font-family: 'Share Tech Mono', monospace; }
@@ -119,16 +126,27 @@ body {
   color: var(--c-neon); text-shadow: var(--glow-soft);
 }
 
-/* ---------- 底部键位提示 ---------- */
-.hud-keys {
-  position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
-  z-index: 2; display: flex; align-items: center; gap: 12px;
-  background: var(--c-panel); border: 1px solid var(--c-border);
-  border-radius: 999px; padding: 6px 14px;
+/* ---------- 场景内消息提示(替代常驻键位栏) ---------- */
+.scene-msg {
+  position: fixed; bottom: 72px; left: 50%;
+  z-index: 4; display: flex; align-items: center; gap: 9px;
+  max-width: min(620px, 88vw); padding: 8px 16px;
+  background: rgba(6, 12, 22, 0.62);
+  border: 1px solid rgba(0, 240, 255, 0.26); border-radius: 999px;
   backdrop-filter: blur(7px) saturate(1.2);
-  box-shadow: 0 0 0 1px rgba(0,230,255,.15), 0 0 12px rgba(0,240,255,.22);
+  box-shadow: 0 0 0 1px rgba(0,230,255,.10), 0 0 16px rgba(0,240,255,.18);
+  font-family: 'Share Tech Mono', monospace; font-size: 13px; line-height: 1.45;
+  letter-spacing: 0.04em; color: var(--c-text);
+  pointer-events: none;   /* 纯消息,不吃点击 */
+  opacity: 0; transform: translateX(-50%) translateY(8px);
+  transition: opacity 0.24s ease, transform 0.24s ease;
 }
-.hud-keys span { display: flex; align-items: center; gap: 6px; }
+.scene-msg.is-on { opacity: 1; transform: translateX(-50%) translateY(0); }
+.scene-msg-dot {
+  flex-shrink: 0; width: 7px; height: 7px; border-radius: 50%;
+  background: var(--c-neon); box-shadow: 0 0 8px var(--c-neon);
+}
+.scene-msg-text { text-shadow: 0 0 1px rgba(0,240,255,.25); }
 
 .key-cap {
   display: inline-flex; align-items: center; justify-content: center;
@@ -205,7 +223,6 @@ body {
 }
 .dialog-head {
   display: flex; align-items: center; gap: 10px;
-  padding: 9px 14px 0 14px; border-bottom: 1px solid var(--c-border);
 }
 .dialog-chip {
   width: 10px; height: 10px; border-radius: 50%;
@@ -239,10 +256,278 @@ body {
   font-size: 11px; color: var(--c-dim);
 }
 
-/* ---------- 虚拟摇杆 ---------- */
+/* ---------- 右下角按钮排:音效开关 + 设置入口 ---------- */
+.hud-gear,
+.hud-sound {
+  position: fixed; bottom: 18px; z-index: 3;
+  width: 40px; height: 40px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  line-height: 1;
+  color: var(--c-neon); background: var(--c-panel);
+  border: 1px solid var(--c-border);
+  backdrop-filter: blur(7px) saturate(1.2);
+  -webkit-backdrop-filter: blur(7px) saturate(1.2);
+  box-shadow: 0 0 0 1px rgba(0,230,255,.15), 0 0 12px rgba(0,240,255,.22);
+  cursor: pointer;
+  transition: color .14s, border-color .14s, box-shadow .14s, transform .14s;
+}
+.hud-gear   { right: 18px; font-size: 17px; }
+.hud-sound  { right: 68px; }
+.hud-gear:hover,
+.hud-sound:hover {
+  color: var(--c-neon-magenta); border-color: var(--c-neon-magenta);
+  box-shadow: 0 0 0 1px rgba(255,45,149,.2), 0 0 16px rgba(255,45,149,.34);
+}
+.hud-gear:active,
+.hud-sound:active { transform: scale(.94); }
+.hud-gear:focus-visible,
+.hud-sound:focus-visible { outline: 2px solid var(--c-neon); outline-offset: 2px; }
+.hud-toggle-icon { display: block; width: 20px; height: 20px; }
+/* 静音态:声波换成叉,描边转暗,与提示开关的收起态同一套视觉语言 */
+.hud-sound .snd-mute { display: none; }
+.hud-sound[aria-pressed="false"] .snd-wave { display: none; }
+.hud-sound[aria-pressed="false"] .snd-mute { display: block; }
+.hud-sound[aria-pressed="false"] {
+  color: var(--c-dim-bright);
+  border-color: rgba(0, 240, 255, 0.22);
+  box-shadow: 0 0 0 1px rgba(0,230,255,.10);
+}
+
+/* ---------- 设置弹窗 ---------- */
+.settings {
+  position: fixed; inset: 0; z-index: 6;
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px;
+  background: rgba(4, 8, 16, 0.55);
+  backdrop-filter: blur(3px);
+}
+.settings-panel {
+  width: min(470px, 100%);
+  display: flex; flex-direction: column;
+  max-height: min(88vh, 700px);
+  background: var(--c-panel);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-panel);
+  backdrop-filter: blur(9px) saturate(1.35);
+  box-shadow: 0 0 0 1px rgba(0,0,0,.18), 0 0 22px rgba(0,240,255,.18),
+              0 0 44px rgba(255,45,149,.11);
+  clip-path: polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px);
+  animation: settings-rise .26s cubic-bezier(.2, .72, .32, 1) forwards;
+}
+@keyframes settings-rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.settings-head {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 14px 10px 14px;
+}
+.settings-title {
+  font-family: 'Orbitron', sans-serif; font-size: 14px; font-weight: 700;
+  letter-spacing: .06em; color: var(--c-neon); text-shadow: var(--glow-soft);
+}
+.settings-body { padding: 14px 16px 16px 16px; flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+.settings-label {
+  font-family: 'Share Tech Mono', monospace; font-size: 11px;
+  text-transform: uppercase; letter-spacing: .12em;
+  color: var(--c-dim); margin-bottom: 10px;
+}
+.settings-opt {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 10px 12px; margin-bottom: 8px;
+  border: 1px solid rgba(0, 240, 255, .18);
+  border-radius: 10px;
+  background: rgba(0, 240, 255, .04);
+  cursor: pointer;
+  transition: border-color .14s, background .14s, box-shadow .14s;
+}
+.settings-opt:hover { border-color: var(--c-border); background: rgba(0, 240, 255, .08); }
+.settings-opt:focus-within { outline: 2px solid var(--c-neon); outline-offset: 2px; }
+/* 选中态(不支持 :has 的浏览器仍有圆圈与文字高亮) */
+.settings-opt:has(.settings-radio:checked) {
+  border-color: var(--c-neon-magenta);
+  background: rgba(255, 45, 149, .09);
+  box-shadow: 0 0 0 1px rgba(255,45,149,.16), 0 0 16px rgba(255,45,149,.22);
+}
+.settings-radio {
+  appearance: none; -webkit-appearance: none;
+  flex: 0 0 auto;
+  width: 14px; height: 14px; margin-top: 3px;
+  border: 1px solid var(--c-border); border-radius: 50%;
+  background: transparent; cursor: pointer;
+  transition: border-color .14s, box-shadow .14s;
+}
+.settings-radio:checked {
+  border-color: var(--c-neon-magenta);
+  background: radial-gradient(circle, var(--c-neon-magenta) 0 45%, transparent 48%);
+  box-shadow: 0 0 10px rgba(255,45,149,.55);
+}
+.settings-opt-name {
+  display: block;
+  font-family: 'Rajdhani', sans-serif; font-size: 14px; font-weight: 600;
+  color: var(--c-text);
+}
+.settings-radio:checked + .settings-opt-body .settings-opt-name { color: var(--c-neon-magenta); }
+
+.settings-opt-desc {
+  display: block; margin-top: 2px;
+  font-family: 'Share Tech Mono', monospace; font-size: 11px; line-height: 1.45;
+  color: var(--c-dim);
+}
+.settings-note {
+  margin-top: 10px;
+  font-family: 'Share Tech Mono', monospace; font-size: 11px;
+  color: var(--c-dim); opacity: .85;
+}
+
+/* ---------- 设置:分类页 ---------- */
+.settings-tabs {
+  display: flex; gap: 6px;
+  padding: 8px 14px 0 14px;
+  border-bottom: 1px solid var(--c-border);
+}
+.settings-tab {
+  appearance: none; -webkit-appearance: none;
+  padding: 7px 14px 8px 14px;
+  font-family: 'Share Tech Mono', monospace; font-size: 11px;
+  letter-spacing: .12em; text-transform: uppercase;
+  color: var(--c-dim);
+  background: transparent;
+  border: 1px solid transparent; border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  cursor: pointer;
+  transition: color .14s, background .14s, border-color .14s;
+}
+.settings-tab:hover { color: var(--c-text); background: rgba(0, 240, 255, .06); }
+.settings-tab.is-active {
+  color: var(--c-neon);
+  background: rgba(0, 240, 255, .10);
+  border-color: var(--c-border);
+  text-shadow: var(--glow-soft);
+}
+.settings-tab:focus-visible { outline: 2px solid var(--c-neon); outline-offset: 2px; }
+
+/* ---------- 设置:鼠标灵敏度 ---------- */
+.settings-label-gap { margin-top: 16px; }
+.settings-sens-row { display: flex; align-items: center; gap: 8px; }
+.settings-sens-input {
+  width: 86px; height: 32px; padding: 0 10px;
+  font-family: 'Share Tech Mono', monospace; font-size: 14px; letter-spacing: .06em;
+  color: var(--c-neon); text-align: center;
+  background: rgba(0, 240, 255, .06);
+  border: 1px solid var(--c-border); border-radius: 8px;
+  box-shadow: inset 0 0 10px rgba(0, 240, 255, .10);
+  transition: border-color .14s, box-shadow .14s, color .14s;
+}
+.settings-sens-input:focus {
+  outline: none; border-color: var(--c-neon);
+  box-shadow: 0 0 0 1px rgba(0, 240, 255, .35), 0 0 14px rgba(0, 240, 255, .28);
+}
+.settings-sens-input.is-invalid {
+  color: var(--c-neon-magenta); border-color: var(--c-neon-magenta);
+  box-shadow: 0 0 0 1px rgba(255, 45, 149, .3), 0 0 14px rgba(255, 45, 149, .22);
+}
+.settings-sens-unit {
+  font-family: 'Share Tech Mono', monospace; font-size: 13px; color: var(--c-dim-bright);
+}
+.settings-sens-save {
+  appearance: none; -webkit-appearance: none;
+  height: 32px; padding: 0 16px; margin-left: auto;
+  font-family: 'Share Tech Mono', monospace; font-size: 12px; letter-spacing: .12em;
+  color: var(--c-neon);
+  background: rgba(0, 240, 255, .10);
+  border: 1px solid var(--c-border); border-radius: 8px;
+  cursor: pointer;
+  transition: color .14s, background .14s, border-color .14s, transform .14s;
+}
+.settings-sens-save:hover {
+  color: var(--c-neon-magenta); background: rgba(255, 45, 149, .12); border-color: var(--c-neon-magenta);
+}
+.settings-sens-save:active { transform: scale(.96); }
+.settings-sens-save:focus-visible { outline: 2px solid var(--c-neon); outline-offset: 2px; }
+
+/* ---------- 设置:移动方案 ---------- */
+.settings-presets { display: flex; flex-wrap: wrap; gap: 8px; }
+.settings-preset {
+  appearance: none; -webkit-appearance: none;
+  padding: 8px 14px;
+  font-family: 'Share Tech Mono', monospace; font-size: 12px; letter-spacing: .08em;
+  color: var(--c-dim-bright);
+  background: rgba(0, 240, 255, .04);
+  border: 1px solid rgba(0, 240, 255, .18); border-radius: 8px;
+  cursor: pointer;
+  transition: color .14s, background .14s, border-color .14s, box-shadow .14s;
+}
+.settings-preset:hover { color: var(--c-text); background: rgba(0, 240, 255, .08); border-color: var(--c-border); }
+.settings-preset.is-active {
+  color: var(--c-neon-magenta);
+  background: rgba(255, 45, 149, .09);
+  border-color: var(--c-neon-magenta);
+  box-shadow: 0 0 0 1px rgba(255, 45, 149, .16), 0 0 14px rgba(255, 45, 149, .2);
+}
+.settings-preset:focus-visible { outline: 2px solid var(--c-neon); outline-offset: 2px; }
+
+/* ---------- 设置:键位绑定 ---------- */
+.keybind-list {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 6px 10px;
+  list-style: none;
+}
+.keybind-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 5px 8px 5px 10px;
+  border: 1px solid rgba(0, 240, 255, .14); border-radius: 8px;
+  background: rgba(0, 240, 255, .03);
+}
+.keybind-name { font-family: 'Rajdhani', sans-serif; font-size: 13px; color: var(--c-text); }
+.keybind-cap {
+  appearance: none; -webkit-appearance: none;
+  flex: 0 0 auto;
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 56px; height: 24px; padding: 0 8px;
+  font-family: 'Share Tech Mono', monospace; font-size: 11px; font-weight: 700;
+  letter-spacing: .04em;
+  color: var(--c-neon);
+  background: rgba(0, 240, 255, .10);
+  border: 1px solid var(--c-border); border-radius: 6px;
+  cursor: pointer;
+  transition: color .14s, background .14s, border-color .14s, box-shadow .14s;
+}
+.keybind-cap:hover { color: var(--c-neon-magenta); background: rgba(255, 45, 149, .10); border-color: var(--c-neon-magenta); }
+.keybind-cap.is-listening {
+  color: var(--c-neon-magenta);
+  background: rgba(255, 45, 149, .14);
+  border-color: var(--c-neon-magenta);
+  box-shadow: 0 0 0 1px rgba(255, 45, 149, .3), 0 0 16px rgba(255, 45, 149, .38);
+  animation: keybind-pulse 1s ease-in-out infinite;
+}
+@keyframes keybind-pulse { 50% { opacity: .55; } }
+.keybind-cap:focus-visible { outline: 2px solid var(--c-neon); outline-offset: 2px; }
+
+.settings-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 14px; }
+.settings-reset {
+  appearance: none; -webkit-appearance: none;
+  padding: 7px 14px;
+  font-family: 'Share Tech Mono', monospace; font-size: 11px; letter-spacing: .1em;
+  color: var(--c-dim-bright);
+  background: transparent;
+  border: 1px solid rgba(0, 240, 255, .24); border-radius: 8px;
+  cursor: pointer;
+  transition: color .14s, background .14s, border-color .14s;
+}
+.settings-reset:hover { color: var(--c-neon); background: rgba(0, 240, 255, .08); border-color: var(--c-border); }
+.settings-reset:focus-visible { outline: 2px solid var(--c-neon); outline-offset: 2px; }
+.settings-hint {
+  flex: 1 1 160px;
+  font-family: 'Share Tech Mono', monospace; font-size: 11px; line-height: 1.45;
+  color: var(--c-dim);
+}
+
+/* ---------- 虚拟摇杆(仅触屏设备显示) ---------- */
+/* 默认隐藏:桌面用键盘,由 body.touch-mode 在触屏环境下打开 */
 .joystick {
   position: fixed; bottom: 70px; left: 22px; z-index: 3;
   width: 108px; height: 108px; touch-action: none; user-select: none;
+  display: none;
 }
 .joy-base { position: absolute; inset: 0; border-radius: 50%; }
 .joy-ring, .joy-cross, .joy-knob { position: absolute; left: 50%; top: 50%; }
@@ -324,19 +609,24 @@ body {
 @media (max-width: 640px) {
   .hud-radar { top: 12px; left: 12px; }
   .hud-status { top: 12px; right: 12px; }
-  .hud-keys   { bottom: 90px; }
+  .scene-msg  { bottom: 148px; }
   .hud-logo   { left: 12px; bottom: 12px; }
+  .keybind-list { grid-template-columns: 1fr; }
+  .settings-panel { max-height: min(92dvh, 700px); }
   .loader-sub { display: none; }
 }
-body.touch-mode .hud-keys    { display: none !important; }
 body.touch-mode .joystick    { display: flex; }
 body.touch-mode .hud-radar   { bottom: 110px; top: auto; }
 body.touch-mode .touch-interact:not([hidden]) { display: flex; }
+body.touch-mode .hud-gear { display: none !important; }  /* 设置面板入口仅桌面 */
+@media (max-width: 640px) { .settings-panel { width: 100%; } }
 @media (hover: hover) {
   .hud-radar { transition: box-shadow 0.18s, border-color 0.18s; }
   .hud-radar:hover { box-shadow: 0 0 0 2px rgba(0,240,255,.44), var(--glow-hard); border-color: var(--c-neon); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .radar-sweep, .loader-ring, .dialog { animation: none; }
+  .radar-sweep, .loader-ring, .dialog, .settings-panel { animation: none; }
+  .scene-msg { transition: none; }
+  .keybind-cap { animation: none; }
   .dialog { opacity: 1; transform: translateX(-50%) !important; }
 }

@@ -2,6 +2,7 @@
 // 分层:远城/地形/岩层/晶簇/塔群/栈桥/灯牌/粒子/交互物
 // [写实化] 天穹与海面由 main.js 的 Sky(大气散射)/Water(平面反射)接管
 // [写实化] 地形叠加真实草地 PBR 贴图
+// [碰撞] 实心道具登记到 obstacles,由 main.js 把角色挡在体外
 import { ISLAND_RADIUS, WATER_LEVEL, heightAt, rng, clamp } from './utils.js';
 import { makeGlowTexture, makeWindowTexture, makeSignTexture, makeDotTexture } from './assets.js';
 
@@ -19,6 +20,9 @@ export function buildIsland(THREE, scene) {
   const nearSpawn = (x, z) => Math.hypot(x - SPAWN_X, z - SPAWN_Z) < SPAWN_CLEAR;
   const interactives = [];
   const updaters = [];
+  // 实心障碍:圆柱体近似(x/z 圆心 + 半径 + 顶面高度),供 main.js 做角色碰撞
+  const obstacles = [];
+  const addObstacle = (x, z, r, top) => obstacles.push({ x, z, r, top });
 
   const glowCyan = makeGlowTexture(THREE, NEON_CYAN);
   const glowMag = makeGlowTexture(THREE, NEON_MAGENTA);
@@ -245,11 +249,15 @@ export function buildIsland(THREE, scene) {
     const m = new THREE.Mesh(rockGeo, rand() > 0.72 ? rockEdgeMat : rockMat);
     m.position.set(x, h + 0.1, z);
     const sc = 0.45 + rand() * 1.55;
-    m.scale.set(sc, sc * (0.5 + rand() * 0.8), sc);
+    const sy = sc * (0.5 + rand() * 0.8);   // 先取值,保持随机序列与旧版一致
+    m.scale.set(sc, sy, sc);
     m.rotation.set(rand() * Math.PI, rand() * Math.PI, rand() * Math.PI);
     m.castShadow = true;
     m.receiveShadow = true;
     scene.add(m);
+    // 高于膝盖的岩石才挡人:半径按十二面体外接球的水平投影折算
+    const rockTop = h + 0.1 + sy;
+    if (rockTop - h > 0.55) addObstacle(x, z, sc * 0.86, rockTop);
     placed++;
   }
 
@@ -285,6 +293,7 @@ export function buildIsland(THREE, scene) {
       shard.rotation.set(tilt, rand() * Math.PI, (rand() - 0.5) * 0.42);
       shard.castShadow = true;
       scene.add(shard);
+      addObstacle(x + ox, z + oz, Math.max(cw, 0.10), h + ch * 1.1);
       const tip = new THREE.Mesh(tipGeo, mat);
       tip.scale.set(cw, ch * 0.4, cw);
       tip.position.set(x + ox, h + ch * 0.92, z + oz);
@@ -353,6 +362,7 @@ export function buildIsland(THREE, scene) {
     grp.add(holo);
     grp.position.set(sp.x, gy, sp.z);
     scene.add(grp);
+    addObstacle(sp.x, sp.z, 0.62, gy + sp.h);
 
     const lamp = new THREE.PointLight(sp.c, 70, 32, 2);
     lamp.position.set(sp.x, gy + sp.h + 1.3, sp.z);
@@ -506,6 +516,12 @@ export function buildIsland(THREE, scene) {
       box.castShadow = true;
       box.receiveShadow = true;
       scene.add(box);
+      // 长方体箱体:沿长轴排 3 枚圆形碰撞体,近似矩形轮廓并保留圆角手感
+      const bry = box.rotation.y;
+      for (let k = -1; k <= 1; k++) {
+        addObstacle(cx + Math.cos(bry) * k * 1.4, cz - Math.sin(bry) * k * 1.4,
+          1.25, gy + 2.3 + s * 2.35);
+      }
       // 角标灯
       const strip = new THREE.Mesh(
         new THREE.BoxGeometry(4.5, 0.06, 2.4),
@@ -700,6 +716,7 @@ export function buildIsland(THREE, scene) {
       holo.position.y = 3.0 + Math.sin(t * 2) * 0.12;
       screen.material.emissiveIntensity = 1.9 + 0.7 * (0.5 + 0.5 * Math.sin(t * 3.4));
     });
+    addObstacle(x, z, 0.85, gy + 1.7);
     interactives.push({ name: '数据终端 DL-07', kind: 'terminal', pos: new THREE.Vector3(x, gy, z) });
   }
 
@@ -745,6 +762,7 @@ export function buildIsland(THREE, scene) {
       dish.rotation.z = Math.sin(t * 2.2) * 0.3;
       thr.scale.y = 0.85 + 0.3 * (0.5 + 0.5 * Math.sin(t * 9));
     });
+    addObstacle(x, z, 0.62, gy + 1.6);
     interactives.push({ name: '维修机器人 R-7', kind: 'npc', pos: new THREE.Vector3(x, gy, z) });
   }
 
@@ -792,6 +810,7 @@ export function buildIsland(THREE, scene) {
       core.material.emissiveIntensity = 1.9 + 0.9 * (0.5 + 0.5 * Math.sin(t * 3 + x));
       ringBase.rotation.z = t * 0.9;
     });
+    addObstacle(x, z, 0.92, gy + 1.6);
     interactives.push({ name: '能量核心', kind: 'core', pos: new THREE.Vector3(x, gy, z) });
   }
 
@@ -799,5 +818,5 @@ export function buildIsland(THREE, scene) {
     for (const u of updaters) u(dt, t);
   }
 
-  return { interactives, update };
+  return { interactives, obstacles, update };
 }

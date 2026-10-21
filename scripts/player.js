@@ -6,7 +6,11 @@ import * as THREE from 'three';
 import { GLTFLoader } from '../libs/loaders/GLTFLoader.js';
 import { WALK_SPEED, RUN_SPEED } from './utils.js';
 
-export function buildPlayer(THREE, scene) {
+/**
+ * @param {(strength: number, running: boolean) => void} [onStep]
+ *   落脚回调:每一步触发一次(尘土与脚步声共用同一拍)。走路 strength 0.62,跑动 1。
+ */
+export function buildPlayer(THREE, scene, onStep = null) {
   const group = new THREE.Group();
   scene.add(group);
 
@@ -59,8 +63,6 @@ export function buildPlayer(THREE, scene) {
       actions.idle = A('Idle');
       actions.walk = A('Walk');
       actions.run  = A('Run');
-      // Soldier 默认面向方向与移动前进方向一致性:官方模型面朝 +Z,本场景 MoveDir 也用 +Z 前向,无需矫正;
-      // 若实测反向,把 model.rotation.y 调整即可。
 
       __clips = gltf.animations.map((c) => c.name);
       current = actions.idle;
@@ -135,14 +137,16 @@ export function buildPlayer(THREE, scene) {
   const WALK_NOMINAL = 1.55;
   const RUN_NOMINAL = 4.6;
 
-  const anim = { mode: 'idle', step: -1, lean: 0 };
+  const anim = { mode: 'idle', step: -1, lean: 0, turn: 0 };
 
   /**
    * @param {number} dt        帧间隔
-   * @param {number} moveRatio 当前速度/疾跑速度(0~1)
+   * @param {number} speed     当前水平速度(m/s)
    * @param {number} t         累计时间
+   * @param {number} turnRate  转向角速度(rad/s)
+   * @param {boolean} backpedal 是否倒着走:动作倒放,脚步方向与位移一致
    */
-  function update(dt, speed, t = 0, turnRate = 0) {
+  function update(dt, speed, t = 0, turnRate = 0, backpedal = false) {
     // 光环呼吸
     groundGlow.material.opacity = 0.09 + 0.05 * (0.5 + 0.5 * Math.sin(t * 2.4));
     groundGlow.scale.setScalar(1 + Math.sin(t * 2.4) * 0.04);
@@ -156,11 +160,13 @@ export function buildPlayer(THREE, scene) {
     const running = speed > (WALK_SPEED + RUN_SPEED) * 0.5;
     const mode = !moving ? 'idle' : (running ? 'run' : 'walk');
 
+    // 倒着走时用负的 timeScale 让动作反向播放:脚往后退,和位移方向一致
+    const dir = backpedal ? -1 : 1;
     if (mode === 'walk') {
-      const ts = THREE.MathUtils.clamp(speed / WALK_NOMINAL, 0.7, 1.9);
+      const ts = THREE.MathUtils.clamp(speed / WALK_NOMINAL, 0.7, 1.9) * dir;
       switchTo(actions.walk, FADE_LOCO, ts);
     } else if (mode === 'run') {
-      const ts = THREE.MathUtils.clamp(speed / RUN_NOMINAL, 0.8, 1.7);
+      const ts = THREE.MathUtils.clamp(speed / RUN_NOMINAL, 0.8, 1.7) * dir;
       switchTo(actions.run, FADE_LOCO, ts);
     } else {
       switchTo(actions.idle, FADE_IDLE, 1);
@@ -169,15 +175,20 @@ export function buildPlayer(THREE, scene) {
     if (mode !== anim.mode) anim.mode = mode;
 
     // 转向侧倾:转弯时上身向内侧压,避免"平移滑行"感
-    anim.lean += (THREE.MathUtils.clamp(-turnRate * 0.16, -0.22, 0.22) - anim.lean) * Math.min(1, dt * 8);
+    // 角速度先做平滑,避免单帧尖峰;站定(moving=false)时目标一律为 0,保证静止时永远站直
+    anim.turn += (turnRate - anim.turn) * Math.min(1, dt * 10);
+    const leanTarget = moving ? THREE.MathUtils.clamp(-anim.turn * 0.16, -0.22, 0.22) : 0;
+    anim.lean += (leanTarget - anim.lean) * Math.min(1, dt * 8);
     if (model) model.rotation.z = anim.lean;
 
-    // 步频脉冲驱动脚步尘土(跑动更明显)
+    // 步频脉冲驱动脚步尘土与脚步声(跑动更明显)
     if (current && moving) {
       const stride = current.time / (running ? 0.34 : 0.52);
       if (Math.floor(stride) !== anim.step) {
         anim.step = Math.floor(stride);
-        puff(running ? 1 : 0.62, running);
+        const strength = running ? 1 : 0.62;
+        puff(strength, running);
+        if (onStep) onStep(strength, running);
       }
     }
   }
