@@ -1,0 +1,11 @@
+# 本地 Python 运行时
+Python/
+
+# 临时调试文件
+_tmp/
+_*.py
+_*.json
+shot*.png
+
+# 编辑器配置
+.vscode/
