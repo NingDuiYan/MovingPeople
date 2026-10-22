@@ -1,6 +1,6 @@
 // ============ 主入口:渲染器 / 相机 / 输入 / 交互主循环 ============
+import { moveWithCollision } from './collision.js';
 import {
-  ISLAND_RADIUS,
   WATER_LEVEL,
   heightAt,
   clamp,
@@ -64,7 +64,6 @@ function fatal(msg) {
 }
 
 const INTERACT_RADIUS = 3.2;
-const PLAYER_RADIUS = 0.36; // 角色碰撞半径(m):与 GLB 身形匹配
 
 const dialogData = {
   npc: {
@@ -645,7 +644,6 @@ async function boot() {
   const move = new THREE.Vector3();
   const camTarget = new THREE.Vector3();
   const obstacles = island.obstacles;
-  const MAX_R = ISLAND_RADIUS * 0.955;
   const radarPoints = island.interactives.map((p) => ({ x: p.pos.x, z: p.pos.z, kind: p.kind }));
 
   const clock = new THREE.Clock();
@@ -654,59 +652,6 @@ async function boot() {
   let prevHeading = heading;
   let turnRate = 0;
   let started = false;
-
-  /** 环形能量边界:超出就把角色按半径缩回来 */
-  function clampToIsland(p) {
-    const pr = Math.hypot(p.x, p.z);
-    if (pr > MAX_R) {
-      const k = MAX_R / pr;
-      p.x *= k;
-      p.z *= k;
-    }
-  }
-
-  /**
-   * 实心障碍碰撞(圆 vs 圆):沿法线把角色推到障碍表面外。
-   * 只削掉法向穿透量、保留切向位移 —— 贴着岩石走会自然滑开,不会卡死。
-   * footY >= top 时跳过:矮于膝盖的碎石不挡路,站在高处也不会被脚下的石头拦住。
-   */
-  function resolveObstacles(p, footY) {
-    for (let pass = 0; pass < 3; pass++) {
-      let hit = false;
-      for (const o of obstacles) {
-        if (footY >= o.top) continue;
-        const dx = p.x - o.x;
-        const dz = p.z - o.z;
-        const minD = o.r + PLAYER_RADIUS;
-        const d2 = dx * dx + dz * dz;
-        if (d2 >= minD * minD) continue;
-        const d = Math.sqrt(d2);
-        if (d > 1e-4) {
-          const k = minD / d;
-          p.x = o.x + dx * k;
-          p.z = o.z + dz * k;
-        } else {
-          // 正好落在圆心上:沿当前朝向前方推出,避免除零
-          p.x = o.x + Math.sin(heading) * minD;
-          p.z = o.z + Math.cos(heading) * minD;
-        }
-        hit = true;
-      }
-      if (!hit) break; // 没有穿透就不用再迭代
-    }
-  }
-
-  /** 当前最深穿透量(> 0 说明角色仍陷在某个实心体内),用于校验推出是否真的干净 */
-  function penetrationAt(p, footY) {
-    let worst = 0;
-    for (const o of obstacles) {
-      if (footY >= o.top) continue;
-      const d = Math.hypot(p.x - o.x, p.z - o.z);
-      const pen = o.r + PLAYER_RADIUS - d;
-      if (pen > worst) worst = pen;
-    }
-    return worst;
-  }
 
   function frame() {
     requestAnimationFrame(frame);
@@ -739,20 +684,9 @@ async function boot() {
       // 真实位移方向与朝向相反 → 在倒着走:步行动作倒放,避免脚底像打滑(太空步)
       backpedal = move.x * faceX + move.z * faceZ < 0;
       const speed = run ? RUN_SPEED : WALK_SPEED;
-      const prevX = playerPos.x;
-      const prevZ = playerPos.z;
-      playerPos.x += move.x * speed * dt;
-      playerPos.z += move.z * speed * dt;
-      clampToIsland(playerPos);
-      // 岩石/晶簇/塔/集装箱/装置挡人,否则会整个走进模型里
-      resolveObstacles(playerPos, heightAt(playerPos.x, playerPos.z));
-      clampToIsland(playerPos); // 被推出后仍需留在能量边界内
-      // 夹在晶簇这种重叠小圆的缝隙里时,逐圆推出会互相打架、几帧内收敛不了,
-      // 此时退回上一帧的位置(上一帧位置由归纳法保证是合法的),绝不留在实心体内
-      if (penetrationAt(playerPos, heightAt(playerPos.x, playerPos.z)) > 1e-3) {
-        playerPos.x = prevX;
-        playerPos.z = prevZ;
-      }
+      // 岩石/晶簇/塔/集装箱/装置挡人,否则会整个走进模型里;
+      // 解算收敛不了时(重叠缝隙)退回上一帧位置,绝不留在实心体内
+      moveWithCollision(playerPos, move.x * speed * dt, move.z * speed * dt, obstacles, heading);
       heading = lerpAngle(heading, Math.atan2(faceX, faceZ), Math.min(1, dt * 12));
       player.group.rotation.y = heading;
       let dh = heading - prevHeading;
