@@ -1,0 +1,33 @@
+{
+  "name": "neon-isle",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "description": "霓虹孤岛 NEON ISLE — Three.js 赛博朋克 3D 探索 Demo",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "check": "npm run lint && npm run format:check && npm run test"
+  },
+  "dependencies": {
+    "three": "^0.160.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "eslint": "^9.39.4",
+    "globals": "^17.13.0",
+    "prettier": "^3.9.10",
+    "vite": "^7.3.7",
+    "vitest": "^3.2.7"
+  }
+}

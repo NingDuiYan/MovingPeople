@@ -1,0 +1,9 @@
+node_modules/
+dist/
+coverage/
+.npm-cache/
+libs/
+package-lock.json
+*.glb
+*.jpg
+*.png
