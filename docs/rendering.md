@@ -1,6 +1,6 @@
 # 渲染与画面
 
-## 光源清单(`scripts/main.js:119-163`)
+## 光源清单(`scripts/main.js` 的光照段落)
 
 | 光源       | 类型               | 颜色                    | 强度                  | 说明                                                                                                 |
 | ---------- | ------------------ | ----------------------- | --------------------- | ---------------------------------------------------------------------------------------------------- |
@@ -17,7 +17,7 @@ Three r155+ 使用物理光照单位:`DirectionalLight` 是个位数,`PointLight
 ## 天空 / 海 / 环境反射
 
 - **Sky**(three 官方大气散射):`turbidity 9.5`、`rayleigh 2.45`、`mieCoefficient 0.012`、`mieDirectionalG 0.86`、`scale 10000`。太阳角度 `phi = degToRad(90 - 30)`(仰角 30°)、`theta = 205°`——黄昏低角度,地面仍有有效照明。
-- **Water**(官方平面反射海面):`PlaneGeometry(2200, 2200)`、反射 RT 256²、法线贴图 `libs/textures/waternormals.jpg`(RepeatWrapping)、`waterColor 0x041a26`、`sunColor 0xffe2bd`、`distortionScale 3.1`,`position.y = WATER_LEVEL(0)`;每帧 `uniforms.time += dt * 0.6`。
+- **Water**(官方平面反射海面):`PlaneGeometry(2200, 2200)`、反射 RT 256²、法线贴图 `textures/waternormals.jpg`(`public/` 下,经 `assetUrl()` 拼 URL,RepeatWrapping)、`waterColor 0x041a26`、`sunColor 0xffe2bd`、`distortionScale 3.1`,`position.y = WATER_LEVEL(0)`;每帧 `uniforms.time += dt * 0.6`。
 - **IBL**:把 Sky 临时挪进一个空场景,用 `PMREMGenerator.fromScene` 烘成环境贴图(`scene.environment`,`environmentIntensity 0.38`),金属与光滑表面因此有真实环境反射。烘完立刻 `pmrem.dispose()`。
 
 ## 后期处理(`scripts/postfx.js`)
@@ -35,7 +35,7 @@ scene ──► rtScene (HalfFloat, depth, samples = min(2, maxSamples))
 
 **为什么要自己在合成里做 ACES**:three 只在渲染到画布时应用 `renderer.toneMapping`,渲染到 RenderTarget 时会跳过;所以主入口设的是 `NoToneMapping` + `outputColorSpace = SRGBColorSpace`,ACES 在 `FRAG_COMPOSITE` 里做(`acesFilmic`,Karis 拟合)。
 
-合成 uniform 默认值(`scripts/postfx.js:152-171`),调画面时基本只动这张表:
+合成 uniform 默认值(`scripts/postfx.js` 的 uniforms 表),调画面时基本只动这张表:
 
 | uniform                               | 默认               | 作用                                                                                          |
 | ------------------------------------- | ------------------ | --------------------------------------------------------------------------------------------- |
@@ -55,7 +55,7 @@ scene ──► rtScene (HalfFloat, depth, samples = min(2, maxSamples))
 - 霓虹发光全靠 `MeshBasicMaterial` + `AdditiveBlending` + `depthWrite: false`(环、灯带、光柱、光晕 Sprite),不依赖 bloom 就有辉光感
 - 光晕 = `Sprite` + Canvas 径向渐变贴图(`assets.js:makeGlowTexture`),统一 `fog: false` 让其穿透雾
 - 建筑窗户 = `emissiveMap`(Canvas 随机窗格)+ `emissiveIntensity 0.85`
-- 地形 = `grasslight-big.jpg` + 顶点色调制 + `onBeforeCompile` 注入沙/岩分层;`customProgramCacheKey = 'terrain-detail'` 防止和别的标准材质共用程序缓存
+- 地形 = `textures/grasslight-big.jpg`(`public/` 下,`assetUrl()` 引用)+ 顶点色调制 + `onBeforeCompile` 注入沙/岩分层;`customProgramCacheKey = 'terrain-detail'` 防止和别的标准材质共用程序缓存
 - HUD 全是 DOM + Canvas 2D:雷达是 `<canvas>`,`devicePixelRatio` 上限 2
 
 ## 性能预算

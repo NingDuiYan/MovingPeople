@@ -8,6 +8,6 @@
 | [rendering.md](rendering.md)       | 光照参数表、Sky + Water + PMREM、后期处理五个 pass、性能预算                 | 调整画面观感、排查发灰/过曝/帧率 |
 | [scene.md](scene.md)               | 地形高度场公式、场景十四层清单、碰撞体规则、交互物坐标                       | 加场景内容、改地形、加碰撞       |
 | [controls-ui.md](controls-ui.md)   | 键位动作表、移动预设、视角模式与指针锁定、触屏适配、HUD 与 CSS token、存储键 | 改操作手感、加 UI 面板           |
-| [development.md](development.md)   | 本地运行与验证、常见改动配方、缓存版本号、已知问题、提交约定                 | 每天开发的第一站                 |
+| [development.md](development.md)   | 环境与安装、命令表、改动后自检清单、常见改动配方、已知问题、提交约定         | 每天开发的第一站                 |
 
 另见根目录 [README.md](../README.md)(运行与操作)与 [AGENTS.md](../AGENTS.md)(工程约定硬规则)。
