@@ -1,8 +1,19 @@
 import js from '@eslint/js';
 import globals from 'globals';
 
-/** 第三方与产物目录不参与检查(public/ 只有二进制资产)。 */
-const IGNORED = ['node_modules/**', 'dist/**', 'coverage/**', '.npm-cache/**', 'public/**'];
+/**
+ * 不参与检查的路径:第三方与产物目录(public/ 只有二进制资产),
+ * 加上本地临时目录 —— _tmp/ 与 .tmp/ 是调试脚本与 esbuild 临时文件的落脚点。
+ */
+const IGNORED = [
+  'node_modules/**',
+  'dist/**',
+  'coverage/**',
+  '.npm-cache/**',
+  '.tmp/**',
+  '_tmp/**',
+  'public/**',
+];
 
 export default [
   { ignores: IGNORED },
