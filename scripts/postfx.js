@@ -160,11 +160,11 @@ export function createPostFX(THREE, renderer, scene, camera) {
       uExposure: { value: 1.05 },
       uTime: { value: 0 },
       uVignette: { value: 0.34 },
-      uGrain: { value: 0.010 },
+      uGrain: { value: 0.01 },
       uAberration: { value: 0.0011 },
       uSharpen: { value: 0.32 },
       uContrast: { value: 0.24 },
-      uSaturation: { value: 1.10 },
+      uSaturation: { value: 1.1 },
       uTint: { value: 0.55 },
       uBlackPoint: { value: 0.028 },
       uWhitePoint: { value: 0.985 },
@@ -175,7 +175,11 @@ export function createPostFX(THREE, renderer, scene, camera) {
     depthWrite: false,
   });
 
-  let rtScene = null, rtA = null, rtB = null, rtC = null, rtD = null;
+  let rtScene = null,
+    rtA = null,
+    rtB = null,
+    rtC = null,
+    rtD = null;
 
   const rtOpts = {
     type: THREE.HalfFloatType,
@@ -197,8 +201,10 @@ export function createPostFX(THREE, renderer, scene, camera) {
       stencilBuffer: false,
       samples: Math.min(2, maxSamples),
     });
-    const hw = Math.max(1, Math.floor(w / 2)), hh = Math.max(1, Math.floor(h / 2));
-    const qw = Math.max(1, Math.floor(w / 4)), qh = Math.max(1, Math.floor(h / 4));
+    const hw = Math.max(1, Math.floor(w / 2)),
+      hh = Math.max(1, Math.floor(h / 2));
+    const qw = Math.max(1, Math.floor(w / 4)),
+      qh = Math.max(1, Math.floor(h / 4));
     rtA = new THREE.WebGLRenderTarget(hw, hh, rtOpts);
     rtB = new THREE.WebGLRenderTarget(hw, hh, rtOpts);
     rtC = new THREE.WebGLRenderTarget(qw, qh, rtOpts);
@@ -230,15 +236,21 @@ export function createPostFX(THREE, renderer, scene, camera) {
     pass(brightMat, rtA);
 
     // 3) 近层泛光:半分辨率两轮双向高斯
-    const hx = 1 / rtA.width, hy = 1 / rtA.height;
-    blur(rtA, rtB, hx * 1.0, 0); blur(rtB, rtA, 0, hy * 1.0);
-    blur(rtA, rtB, hx * 2.2, 0); blur(rtB, rtA, 0, hy * 2.2);
+    const hx = 1 / rtA.width,
+      hy = 1 / rtA.height;
+    blur(rtA, rtB, hx * 1.0, 0);
+    blur(rtB, rtA, 0, hy * 1.0);
+    blur(rtA, rtB, hx * 2.2, 0);
+    blur(rtB, rtA, 0, hy * 2.2);
 
     // 4) 远层泛光:降采样到 1/4 再模糊(方向传 0 退化为纯采样 = 降采样)
     blur(rtA, rtC, 0, 0);
-    const qx = 1 / rtC.width, qy = 1 / rtC.height;
-    blur(rtC, rtD, qx * 2.0, 0); blur(rtD, rtC, 0, qy * 2.0);
-    blur(rtC, rtD, qx * 4.4, 0); blur(rtD, rtC, 0, qy * 4.4);
+    const qx = 1 / rtC.width,
+      qy = 1 / rtC.height;
+    blur(rtC, rtD, qx * 2.0, 0);
+    blur(rtD, rtC, 0, qy * 2.0);
+    blur(rtC, rtD, qx * 4.4, 0);
+    blur(rtD, rtC, 0, qy * 4.4);
 
     // 5) 合成到画布
     compositeMat.uniforms.tScene.value = rtScene.texture;

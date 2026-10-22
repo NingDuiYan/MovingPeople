@@ -2,7 +2,6 @@
 // 资产:libs/models/Soldier.glb(three.js 官方示例模型,含 Idle/Walk/Run 骨骼动画)
 // 未加载完成前用简单占位胶囊,加载后无缝替换进同一 group,避免坐标/相机突变。
 
-import * as THREE from 'three';
 import { GLTFLoader } from '../libs/loaders/GLTFLoader.js';
 import { WALK_SPEED, RUN_SPEED } from './utils.js';
 
@@ -31,8 +30,11 @@ export function buildPlayer(THREE, scene, onStep = null) {
   const groundGlow = new THREE.Mesh(
     new THREE.CircleGeometry(0.95, 22).rotateX(-Math.PI / 2),
     new THREE.MeshBasicMaterial({
-      color: 0x00f0ff, transparent: true, opacity: 0.12,
-      blending: THREE.AdditiveBlending, depthWrite: false,
+      color: 0x00f0ff,
+      transparent: true,
+      opacity: 0.12,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
     }),
   );
   groundGlow.position.y = 0.04;
@@ -40,7 +42,7 @@ export function buildPlayer(THREE, scene, onStep = null) {
 
   // ---------- GLB 加载与动画 ----------
   let mixer = null;
-  let actions = {};
+  const actions = {};
   let current = null;
   let model = null;
   let __clips = [];
@@ -49,10 +51,15 @@ export function buildPlayer(THREE, scene, onStep = null) {
     './libs/models/Soldier.glb',
     (gltf) => {
       model = gltf.scene;
-      model.scale.setScalar(1.05);   // 与场景比例匹配
+      model.scale.setScalar(1.05); // 与场景比例匹配
       // Soldier.glb 正面朝 -Z(由脚尖几何判定),本场景约定局部 +Z 为前进方向
       model.rotation.y = Math.PI;
-      model.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+      model.traverse((o) => {
+        if (o.isMesh) {
+          o.castShadow = true;
+          o.receiveShadow = true;
+        }
+      });
       group.add(model);
 
       mixer = new THREE.AnimationMixer(model);
@@ -62,16 +69,20 @@ export function buildPlayer(THREE, scene, onStep = null) {
       };
       actions.idle = A('Idle');
       actions.walk = A('Walk');
-      actions.run  = A('Run');
+      actions.run = A('Run');
 
       __clips = gltf.animations.map((c) => c.name);
       current = actions.idle;
-      if (current) { current.play(); }
+      if (current) {
+        current.play();
+      }
       // 加载成功,移除占位
       placeholder.visible = false;
     },
     undefined,
-    (err) => { console.warn('[player] Soldier.glb load failed:', err?.message ?? err); },
+    (err) => {
+      console.warn('[player] Soldier.glb load failed:', err?.message ?? err);
+    },
   );
 
   // ---------- 脚步尘土:小环扩散淡出,粗略提示落脚 ----------
@@ -81,8 +92,11 @@ export function buildPlayer(THREE, scene, onStep = null) {
     const m = new THREE.Mesh(
       new THREE.RingGeometry(0.08, 0.16, 12).rotateX(-Math.PI / 2),
       new THREE.MeshBasicMaterial({
-        color: 0xd8c9a8, transparent: true, opacity: 0,
-        depthWrite: false, side: THREE.DoubleSide,
+        color: 0xd8c9a8,
+        transparent: true,
+        opacity: 0,
+        depthWrite: false,
+        side: THREE.DoubleSide,
       }),
     );
     m.visible = false;
@@ -91,7 +105,7 @@ export function buildPlayer(THREE, scene, onStep = null) {
   }
   let puffIdx = 0;
   function puff(strength, running) {
-    const p = puffs[puffIdx = (puffIdx + 1) % PUFF_N];
+    const p = puffs[(puffIdx = (puffIdx + 1) % PUFF_N)];
     const yaw = group.rotation.y;
     const side = (puffIdx % 2 === 0 ? 1 : -1) * 0.12;
     p.mesh.position.set(
@@ -108,10 +122,14 @@ export function buildPlayer(THREE, scene, onStep = null) {
     for (const p of puffs) {
       if (p.life <= 0) continue;
       p.life -= dt * 2.6;
-      if (p.life <= 0) { p.mesh.visible = false; p.mesh.material.opacity = 0; continue; }
+      if (p.life <= 0) {
+        p.mesh.visible = false;
+        p.mesh.material.opacity = 0;
+        continue;
+      }
       const k = 1 - p.life;
       p.mesh.scale.setScalar(p.size * (0.6 + k * 1.5));
-      p.mesh.material.opacity = p.life * 0.30;
+      p.mesh.material.opacity = p.life * 0.3;
     }
   }
 
@@ -158,7 +176,7 @@ export function buildPlayer(THREE, scene, onStep = null) {
     // 按真实速度决定步态;timeScale 与速度挂钩,避免脚底打滑
     const moving = speed > 0.15;
     const running = speed > (WALK_SPEED + RUN_SPEED) * 0.5;
-    const mode = !moving ? 'idle' : (running ? 'run' : 'walk');
+    const mode = !moving ? 'idle' : running ? 'run' : 'walk';
 
     // 倒着走时用负的 timeScale 让动作反向播放:脚往后退,和位移方向一致
     const dir = backpedal ? -1 : 1;
@@ -195,20 +213,30 @@ export function buildPlayer(THREE, scene, onStep = null) {
 
   // 调试信息:确认 GLB 与骨骼动画是否就绪
   function debug() {
-    let skinned = 0, meshes = 0;
-    group.traverse((o) => { if (o.isSkinnedMesh) skinned++; else if (o.isMesh) meshes++; });
+    let skinned = 0,
+      meshes = 0;
+    group.traverse((o) => {
+      if (o.isSkinnedMesh) skinned++;
+      else if (o.isMesh) meshes++;
+    });
     const box = new THREE.Box3().setFromObject(group);
     const size = box.getSize(new THREE.Vector3());
-    const act = current ? {
-      name: current.getClip().name,
-      time: +current.time.toFixed(3),
-      weight: +current.getEffectiveWeight().toFixed(3),
-      timeScale: +current.getEffectiveTimeScale().toFixed(3),
-      running: current.isRunning(),
-    } : null;
+    const act = current
+      ? {
+          name: current.getClip().name,
+          time: +current.time.toFixed(3),
+          weight: +current.getEffectiveWeight().toFixed(3),
+          timeScale: +current.getEffectiveTimeScale().toFixed(3),
+          running: current.isRunning(),
+        }
+      : null;
     return {
-      loaded: !!model, clips: __clips, skinned, meshes,
-      mode: anim.mode, action: act,
+      loaded: !!model,
+      clips: __clips,
+      skinned,
+      meshes,
+      mode: anim.mode,
+      action: act,
       height: +size.y.toFixed(2),
       bbox: [+size.x.toFixed(2), +size.y.toFixed(2), +size.z.toFixed(2)],
     };

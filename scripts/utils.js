@@ -1,10 +1,10 @@
 // ============ 数学与地形工具 ============
 // 场景网格与角色行走共用同一张高度函数 —— 保证「所见即所走」。
 
-export const ISLAND_RADIUS = 40;  // 小岛名义半径(m)
-export const WATER_LEVEL = 0;     // 海平面高度
-export const WALK_SPEED = 2.4;    // 常速 m/s(人类快步量级,配合骨骼步频)
-export const RUN_SPEED = 6.0;     // 疾跑 m/s
+export const ISLAND_RADIUS = 40; // 小岛名义半径(m)
+export const WATER_LEVEL = 0; // 海平面高度
+export const WALK_SPEED = 2.4; // 常速 m/s(人类快步量级,配合骨骼步频)
+export const RUN_SPEED = 6.0; // 疾跑 m/s
 
 export const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 export const lerp = (a, b, t) => a + (b - a) * t;

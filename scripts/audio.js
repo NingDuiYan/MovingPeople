@@ -12,19 +12,19 @@
 // 浏览器自动播放策略:AudioContext 必须由用户手势启动/恢复,所以这里全程懒初始化,
 // 进游戏前不碰音频;主循环里的每次脚步都会顺手 unlock() 兜底。
 
-const MASTER_GAIN = 0.55;     // 总线音量(脚步只是环境音的一部分,不该盖过画面)
-const MIN_GAP = 0.08;         // 两次脚步的最小间隔(s):掉帧时步频脉冲可能连发,避免叠成爆音
-const NOISE_SECONDS = 0.6;    // 复用噪声底的长度(s)
+const MASTER_GAIN = 0.55; // 总线音量(脚步只是环境音的一部分,不该盖过画面)
+const MIN_GAP = 0.08; // 两次脚步的最小间隔(s):掉帧时步频脉冲可能连发,避免叠成爆音
+const NOISE_SECONDS = 0.6; // 复用噪声底的长度(s)
 
 const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
 
 export function createStepAudio() {
   let ctx = null;
-  let bus = null;             // 总线:开关只动它,已排队的节点不用逐个处理
+  let bus = null; // 总线:开关只动它,已排队的节点不用逐个处理
   let noiseBuf = null;
   let lastTime = -1;
   let enabled = true;
-  let foot = 0;               // 左右脚交替:音高/音色做微差,听感不机械
+  let foot = 0; // 左右脚交替:音高/音色做微差,听感不机械
 
   /** 懒初始化音频上下文;不支持 Web Audio 的环境返回 null(游戏照常跑,只是没声音) */
   function ensure() {
@@ -71,7 +71,10 @@ export function createStepAudio() {
   function unlock() {
     const c = ensure();
     if (!c) return;
-    if (c.state === 'suspended') c.resume().catch(() => { /* 浏览器仍拒绝时等下一次手势 */ });
+    if (c.state === 'suspended')
+      c.resume().catch(() => {
+        /* 浏览器仍拒绝时等下一次手势 */
+      });
   }
 
   /** 从噪声底里截一段,接到 lowpass → gain →(可选声像)→ 总线 */
@@ -124,9 +127,9 @@ export function createStepAudio() {
     const s = clamp01(strength);
     foot = 1 - foot;
     const right = foot === 1;
-    const jitter = 0.94 + Math.random() * 0.12;          // 每一步的音量微差
-    const pitch = right ? 1.03 : 0.97;                   // 左右脚的音色微差
-    const pan = right ? 0.16 : -0.16;                    // 左右脚的声像微差
+    const jitter = 0.94 + Math.random() * 0.12; // 每一步的音量微差
+    const pitch = right ? 1.03 : 0.97; // 左右脚的音色微差
+    const pan = right ? 0.16 : -0.16; // 左右脚的声像微差
     const dur = (running ? 0.075 : 0.1) * (0.85 + Math.random() * 0.3);
 
     // 1) 鞋底摩擦:噪声的高频在几十毫秒内滑掉,听感是「落」而不是「呲」
@@ -155,11 +158,13 @@ export function createStepAudio() {
   /** 开关音效;已创建的上下文用极短斜坡过渡,不会有「咔」的爆音 */
   function setEnabled(on) {
     enabled = !!on;
-    if (!enabled) lastTime = -1;   // 静音期间不要残留节流时间
+    if (!enabled) lastTime = -1; // 静音期间不要残留节流时间
     if (ctx && bus) bus.gain.setTargetAtTime(enabled ? MASTER_GAIN : 0, ctx.currentTime, 0.015);
   }
 
-  function isEnabled() { return enabled; }
+  function isEnabled() {
+    return enabled;
+  }
 
   return { unlock, footstep, setEnabled, isEnabled };
 }

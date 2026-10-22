@@ -2,15 +2,15 @@
 
 ## 光源清单(`scripts/main.js:119-163`)
 
-| 光源 | 类型 | 颜色 | 强度 | 说明 |
-|---|---|---|---|---|
-| 太阳 | `DirectionalLight` | `0xffd2a6` | 3.6 | 唯一投影光源,mapSize 2048,radius 2.2,正交范围 ±56,near 20 / far 320,bias `-0.0004`,normalBias `0.02` |
-| 天光 | `HemisphereLight` | `0x9fb8d2` / `0x2b3038` | 0.42 | 冷天顶 + 暗地面反照 |
-| 环境 | `AmbientLight` | `0x3d4a5c` | 0.20 | 只抬暗部,不压对比 |
-| 品红轮廓 | `DirectionalLight` | `0xff2d95` | 0.35 | 位置 (-46, 26, -38),赛博主题染色 |
-| 青色补光 | `DirectionalLight` | `0x1d7f9c` | 0.30 | 位置 (-30, 14, 52) |
-| 角色随身光 | `PointLight` | `0xffd9a8` | 2.4(距离 7,decay 1.6) | 挂在 `player.group` 上 |
-| 塔顶灯 ×4 | `PointLight` | 塔色 | 70(距离 32,decay 2) | 霓虹塔的光晕来源 |
+| 光源       | 类型               | 颜色                    | 强度                  | 说明                                                                                                 |
+| ---------- | ------------------ | ----------------------- | --------------------- | ---------------------------------------------------------------------------------------------------- |
+| 太阳       | `DirectionalLight` | `0xffd2a6`              | 3.6                   | 唯一投影光源,mapSize 2048,radius 2.2,正交范围 ±56,near 20 / far 320,bias `-0.0004`,normalBias `0.02` |
+| 天光       | `HemisphereLight`  | `0x9fb8d2` / `0x2b3038` | 0.42                  | 冷天顶 + 暗地面反照                                                                                  |
+| 环境       | `AmbientLight`     | `0x3d4a5c`              | 0.20                  | 只抬暗部,不压对比                                                                                    |
+| 品红轮廓   | `DirectionalLight` | `0xff2d95`              | 0.35                  | 位置 (-46, 26, -38),赛博主题染色                                                                     |
+| 青色补光   | `DirectionalLight` | `0x1d7f9c`              | 0.30                  | 位置 (-30, 14, 52)                                                                                   |
+| 角色随身光 | `PointLight`       | `0xffd9a8`              | 2.4(距离 7,decay 1.6) | 挂在 `player.group` 上                                                                               |
+| 塔顶灯 ×4  | `PointLight`       | 塔色                    | 70(距离 32,decay 2)   | 霓虹塔的光晕来源                                                                                     |
 
 Three r155+ 使用物理光照单位:`DirectionalLight` 是个位数,`PointLight` 是高数值 + `decay`,`scene.environmentIntensity` 单独调。照抄旧教程的 0.5 强度会让整个岛变黑。
 
@@ -37,16 +37,16 @@ scene ──► rtScene (HalfFloat, depth, samples = min(2, maxSamples))
 
 合成 uniform 默认值(`scripts/postfx.js:152-171`),调画面时基本只动这张表:
 
-| uniform | 默认 | 作用 |
-|---|---|---|
-| `uThreshold` / `uKnee` | 1.05 / 0.65 | 亮部提取阈值与软过渡宽度 |
-| `uStrength` / `uStrengthWide` | 0.26 / 0.15 | 近层 / 远层泛光强度 |
-| `uExposure` | 1.05 | ACES 前曝光 |
-| `uSharpen` | 0.32 | 非锐化掩模(补偿 MSAA 解析后的软化) |
-| `uAberration` | 0.0011 | 横向色散,只作用于画面边缘(`r²` 权重) |
+| uniform                               | 默认               | 作用                                                                                          |
+| ------------------------------------- | ------------------ | --------------------------------------------------------------------------------------------- |
+| `uThreshold` / `uKnee`                | 1.05 / 0.65        | 亮部提取阈值与软过渡宽度                                                                      |
+| `uStrength` / `uStrengthWide`         | 0.26 / 0.15        | 近层 / 远层泛光强度                                                                           |
+| `uExposure`                           | 1.05               | ACES 前曝光                                                                                   |
+| `uSharpen`                            | 0.32               | 非锐化掩模(补偿 MSAA 解析后的软化)                                                            |
+| `uAberration`                         | 0.0011             | 横向色散,只作用于画面边缘(`r²` 权重)                                                          |
 | `uContrast` / `uSaturation` / `uTint` | 0.24 / 1.10 / 0.55 | sRGB 空间的 S 曲线、饱和度、分离色调(暗部偏青蓝 `0.82,0.94,1.12`,高光偏暖金 `1.08,1.02,0.90`) |
-| `uBlackPoint` / `uWhitePoint` | 0.028 / 0.985 | 黑白场,去掉泛光垫底的灰雾 |
-| `uVignette` / `uGrain` | 0.34 / 0.010 | 暗角 / 胶片颗粒 |
+| `uBlackPoint` / `uWhitePoint`         | 0.028 / 0.985      | 黑白场,去掉泛光垫底的灰雾                                                                     |
+| `uVignette` / `uGrain`                | 0.34 / 0.010       | 暗角 / 胶片颗粒                                                                               |
 
 泛光模糊核是一维 5 taps(`0.2270 / 0.3162 ×2 / 0.0703 ×2`,偏移 `1.3846 / 3.2308` 像素),横竖各跑一次;`uDir` 传 `(0, 0)` 退化成纯采样,顺便当降采样用。
 
@@ -72,10 +72,10 @@ scene ──► rtScene (HalfFloat, depth, samples = min(2, maxSamples))
 
 ## 常见画面问题
 
-| 现象 | 大概率原因 |
-|---|---|
-| 整体发灰、暗部不黑 | `uBlackPoint` 偏低或泛光 `uStrengthWide` 偏大 |
-| 高光死白 | `uExposure` 过大,或有人把 `renderer.toneMapping` 改回 ACES(会双重映射) |
-| 地面像贴了塑料 | 地形 `vertexColors` 或 `onBeforeCompile` 的沙/岩分层被绕过 |
-| 霓虹没有辉光 | sprite 贴图没走 `SRGBColorSpace`,`depthWrite` 被打开,或 `uThreshold` 高于自发光亮度 |
-| 水面全黑 | `Water` 的 `sunDirection`/`sunColor` 没跟着 sun 走,或法线贴图加载失败 |
+| 现象               | 大概率原因                                                                          |
+| ------------------ | ----------------------------------------------------------------------------------- |
+| 整体发灰、暗部不黑 | `uBlackPoint` 偏低或泛光 `uStrengthWide` 偏大                                       |
+| 高光死白           | `uExposure` 过大,或有人把 `renderer.toneMapping` 改回 ACES(会双重映射)              |
+| 地面像贴了塑料     | 地形 `vertexColors` 或 `onBeforeCompile` 的沙/岩分层被绕过                          |
+| 霓虹没有辉光       | sprite 贴图没走 `SRGBColorSpace`,`depthWrite` 被打开,或 `uThreshold` 高于自发光亮度 |
+| 水面全黑           | `Water` 的 `sunDirection`/`sunColor` 没跟着 sun 走,或法线贴图加载失败               |

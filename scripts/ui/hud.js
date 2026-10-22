@@ -1,5 +1,5 @@
 // ============ HUD:雷达小地图 / 状态读数 / 交互提示 ============
-import { ISLAND_RADIUS, heightAt } from '../utils.js';
+import { heightAt } from '../utils.js';
 
 // ---------- 雷达 ----------
 // 固定显示整岛概览:北 = -Z 朝上,青菱 = 终端/NPC,粉圆 = 能量核心
@@ -12,8 +12,8 @@ export function createRadar(canvas) {
   ctx.scale(dpr, dpr);
 
   const HALF = LOGICAL / 2;
-  const RANGE = 48;                                    // 雷达覆盖半径(m)
-  const K = (HALF - 9) / RANGE;                        // 世界 → 米mapping 比例
+  const RANGE = 48; // 雷达覆盖半径(m)
+  const K = (HALF - 9) / RANGE; // 世界 → 米mapping 比例
 
   // 缓存一次岛岸多边形(Path2D)
   const coast = new Path2D();
@@ -23,11 +23,15 @@ export function createRadar(canvas) {
     // 沿射线找 h=0 的穿越半径
     let rr = 44;
     for (let s = 44; s > 2; s -= 1) {
-      if (heightAt(Math.cos(a) * s, Math.sin(a) * s) > 0) { rr = s; break; }
+      if (heightAt(Math.cos(a) * s, Math.sin(a) * s) > 0) {
+        rr = s;
+        break;
+      }
     }
     const px = HALF + Math.cos(a) * rr * K;
     const py = HALF + Math.sin(a) * rr * K;
-    if (i === 0) coast.moveTo(px, py); else coast.lineTo(px, py);
+    if (i === 0) coast.moveTo(px, py);
+    else coast.lineTo(px, py);
   }
   coast.closePath();
 
@@ -42,11 +46,17 @@ export function createRadar(canvas) {
     // 网格环 + 十字线
     ctx.strokeStyle = 'rgba(0, 240, 255, 0.10)';
     ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.arc(HALF, HALF, 28, 0, Math.PI * 2); ctx.stroke();
-    ctx.beginPath(); ctx.arc(HALF, HALF, 52, 0, Math.PI * 2); ctx.stroke();
     ctx.beginPath();
-    ctx.moveTo(HALF, 6); ctx.lineTo(HALF, LOGICAL - 6);
-    ctx.moveTo(6, HALF); ctx.lineTo(LOGICAL - 6, HALF);
+    ctx.arc(HALF, HALF, 28, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(HALF, HALF, 52, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(HALF, 6);
+    ctx.lineTo(HALF, LOGICAL - 6);
+    ctx.moveTo(6, HALF);
+    ctx.lineTo(LOGICAL - 6, HALF);
     ctx.stroke();
 
     // 岛体
@@ -66,14 +76,18 @@ export function createRadar(canvas) {
       const pulse = 0.55 + 0.45 * Math.sin(t * 3 + p.x * 0.31 + p.z * 0.17);
       if (p.kind === 'core') {
         ctx.fillStyle = 'rgba(255, 45, 149, 0.9)';
-        ctx.shadowColor = '#ff2d95'; ctx.shadowBlur = 8 * pulse;
-        ctx.beginPath(); ctx.arc(mx, my, 3.2, 0, Math.PI * 2); ctx.fill();
+        ctx.shadowColor = '#ff2d95';
+        ctx.shadowBlur = 8 * pulse;
+        ctx.beginPath();
+        ctx.arc(mx, my, 3.2, 0, Math.PI * 2);
+        ctx.fill();
       } else {
         ctx.save();
         ctx.translate(mx, my);
         ctx.rotate(Math.PI / 4);
         ctx.fillStyle = 'rgba(0, 240, 255, 0.9)';
-        ctx.shadowColor = '#00f0ff'; ctx.shadowBlur = 8 * pulse;
+        ctx.shadowColor = '#00f0ff';
+        ctx.shadowBlur = 8 * pulse;
         ctx.fillRect(-2.6, -2.6, 5.2, 5.2);
         ctx.restore();
       }
@@ -87,7 +101,8 @@ export function createRadar(canvas) {
     ctx.translate(Math.max(8, Math.min(LOGICAL - 8, tx)), Math.max(8, Math.min(LOGICAL - 8, ty)));
     ctx.rotate(Math.PI - heading);
     ctx.fillStyle = '#eaffff';
-    ctx.shadowColor = '#00f0ff'; ctx.shadowBlur = 10;
+    ctx.shadowColor = '#00f0ff';
+    ctx.shadowBlur = 10;
     ctx.beginPath();
     ctx.moveTo(0, -5.5);
     ctx.lineTo(4.2, 4.5);
@@ -120,7 +135,8 @@ export function createStatus({ fpsEl, posEl }) {
       acc += dt;
       if (acc >= 0.5) {
         fpsEl.textContent = String(Math.round(frames / acc)).padStart(2, '0');
-        frames = 0; acc = 0;
+        frames = 0;
+        acc = 0;
       }
     },
     setPos(x, z) {
@@ -136,7 +152,11 @@ export function createPrompt({ promptEl, nameEl }) {
     promptEl.hidden = false;
     nameEl.textContent = name;
   }
-  function hide() { promptEl.hidden = true; }
-  function isVisible() { return !promptEl.hidden; }
+  function hide() {
+    promptEl.hidden = true;
+  }
+  function isVisible() {
+    return !promptEl.hidden;
+  }
   return { show, hide, isVisible };
 }

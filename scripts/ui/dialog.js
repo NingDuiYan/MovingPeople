@@ -9,7 +9,10 @@ export function createDialog({ root, nameEl, textEl, closeBtn }) {
   let lineDone = false;
 
   function clearTimer() {
-    if (timer) { clearInterval(timer); timer = null; }
+    if (timer) {
+      clearInterval(timer);
+      timer = null;
+    }
   }
 
   function showLine(idx) {
@@ -62,7 +65,9 @@ export function createDialog({ root, nameEl, textEl, closeBtn }) {
     }
   }
 
-  function isOpen() { return !root.hidden; }
+  function isOpen() {
+    return !root.hidden;
+  }
 
   closeBtn.addEventListener('click', close);
 

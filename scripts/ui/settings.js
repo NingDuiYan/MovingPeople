@@ -3,8 +3,15 @@
 // 外部持有的引用会自动看到变化,不需要回传新对象。
 
 import {
-  KEY_ACTIONS, MOVE_PRESETS, codeToLabel, isBindableCode,
-  bindCode, applyPreset, matchPreset, defaultBinds, writeBinds,
+  KEY_ACTIONS,
+  MOVE_PRESETS,
+  codeToLabel,
+  isBindableCode,
+  bindCode,
+  applyPreset,
+  matchPreset,
+  defaultBinds,
+  writeBinds,
 } from '../keybinds.js';
 
 const HINT_IDLE = '点键帽后按下新键即可改绑,Esc 取消;撞键的会自动互换。';
@@ -15,17 +22,31 @@ const HINT_LISTEN = '正在改键:按下新的按键…(Esc 取消)';
  * radios/getMode/onSelect 管视角方式,sens* 管鼠标灵敏度,其余管键位。
  */
 export function createSettings({
-  root, openBtn, closeBtn,
-  radios, getMode, onSelect,
-  sensInput, sensSaveBtn, getSens, onSensChange,
-  binds, onBindsChange,
-  keyListEl, presetBoxEl, resetBtnEl, hintEl,
-  notify, onOpenChange,
+  root,
+  openBtn,
+  closeBtn,
+  radios,
+  getMode,
+  onSelect,
+  sensInput,
+  sensSaveBtn,
+  getSens,
+  onSensChange,
+  binds,
+  onBindsChange,
+  keyListEl,
+  presetBoxEl,
+  resetBtnEl,
+  hintEl,
+  notify,
+  onOpenChange,
 }) {
-  let listening = null;   // 正在等按键的动作 id
-  let lastFocus = null;   // 打开前的焦点,关闭时还回去
+  let listening = null; // 正在等按键的动作 id
+  let lastFocus = null; // 打开前的焦点,关闭时还回去
 
-  const say = (text) => { if (notify) notify(text); };
+  const say = (text) => {
+    if (notify) notify(text);
+  };
 
   const tabs = Array.from(root.querySelectorAll('.settings-tab'));
   const panels = tabs.map((t) => document.getElementById(t.getAttribute('aria-controls')));
@@ -59,7 +80,9 @@ export function createSettings({
   // ---------- 视角方式 ----------
   function syncRadios() {
     const mode = getMode();
-    radios.forEach((r) => { r.checked = r.value === mode; });
+    radios.forEach((r) => {
+      r.checked = r.value === mode;
+    });
   }
 
   radios.forEach((r) => {
@@ -85,7 +108,9 @@ export function createSettings({
 
   /** 读输入框的倍率,超出 0.30 – 2.00 或不是数字时返回 null */
   function readSensInput() {
-    const raw = String(sensInput.value || '').trim().replace(',', '.');
+    const raw = String(sensInput.value || '')
+      .trim()
+      .replace(',', '.');
     const v = Number(raw);
     if (!raw || !isFinite(v) || v < 0.3 || v > 2) return null;
     return Math.round(v * 100) / 100;
@@ -110,9 +135,19 @@ export function createSettings({
   if (sensInput) {
     sensInput.addEventListener('input', () => setSensInvalid(false));
     sensInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); saveSens(); return; }
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        e.stopPropagation();
+        saveSens();
+        return;
+      }
       // Esc 只在输入框里撤销这次编辑,不关整个面板
-      if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); syncSens(); sensInput.blur(); }
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        syncSens();
+        sensInput.blur();
+      }
     });
     // 失焦时只把能读的值整理成两位小数;读不出来就先留着,下次同步时再回退,
     // 这样点「保存」前的那次 blur 不会把用户的输入悄悄换掉
@@ -182,8 +217,15 @@ export function createSettings({
     if (!listening) return;
     e.preventDefault();
     e.stopPropagation();
-    if (e.code === 'Escape') { cancelListen(); say('已取消改键'); return; }
-    if (!isBindableCode(e.code)) { say('这个键不能绑定,换一个试试'); return; }
+    if (e.code === 'Escape') {
+      cancelListen();
+      say('已取消改键');
+      return;
+    }
+    if (!isBindableCode(e.code)) {
+      say('这个键不能绑定,换一个试试');
+      return;
+    }
 
     const actionId = listening;
     listening = null;
@@ -197,7 +239,16 @@ export function createSettings({
     const label = codeToLabel(e.code);
     if (swapped) {
       const other = KEY_ACTIONS.find((a) => a.id === swapped).label;
-      say('「' + actionName + '」改为 ' + label + ',' + other + ' 自动接走 ' + codeToLabel(binds[swapped]));
+      say(
+        '「' +
+          actionName +
+          '」改为 ' +
+          label +
+          ',' +
+          other +
+          ' 自动接走 ' +
+          codeToLabel(binds[swapped]),
+      );
     } else {
       say('「' + actionName + '」改为 ' + label);
     }
@@ -223,7 +274,9 @@ export function createSettings({
       const defs = defaultBinds();
       listening = null;
       if (hintEl) hintEl.textContent = HINT_IDLE;
-      Object.keys(defs).forEach((id) => { binds[id] = defs[id]; });
+      Object.keys(defs).forEach((id) => {
+        binds[id] = defs[id];
+      });
       writeBinds(binds);
       renderKeys();
       if (onBindsChange) onBindsChange(binds);
@@ -238,7 +291,9 @@ export function createSettings({
     renderKeys();
   }
 
-  function isOpen() { return !root.hidden; }
+  function isOpen() {
+    return !root.hidden;
+  }
 
   function open() {
     lastFocus = document.activeElement;
@@ -258,14 +313,19 @@ export function createSettings({
   }
 
   function toggle() {
-    if (isOpen()) { close(); return; }
+    if (isOpen()) {
+      close();
+      return;
+    }
     open();
   }
 
   openBtn.addEventListener('click', open);
   closeBtn.addEventListener('click', close);
   // 点遮罩空白处关闭,点面板内部不关闭
-  root.addEventListener('pointerdown', (e) => { if (e.target === root) close(); });
+  root.addEventListener('pointerdown', (e) => {
+    if (e.target === root) close();
+  });
 
   sync();
   if (hintEl) hintEl.textContent = HINT_IDLE;

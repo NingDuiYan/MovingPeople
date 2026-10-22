@@ -49,12 +49,12 @@ npx serve .
 ## 调试入口
 
 ```js
-__neon.scene                 // 场景图,可用 .traverse 找物体
-__neon.camera                // 透视相机
-__neon.renderer.info         // draw calls / 三角形数
-__neon.player.debug()        // GLB、骨骼、当前动作、包围盒
-__neon.island.obstacles      // 碰撞体数组 { x, z, r, top }
-__neon.water.material.uniforms
+__neon.scene; // 场景图,可用 .traverse 找物体
+__neon.camera; // 透视相机
+__neon.renderer.info; // draw calls / 三角形数
+__neon.player.debug(); // GLB、骨骼、当前动作、包围盒
+__neon.island.obstacles; // 碰撞体数组 { x, z, r, top }
+__neon.water.material.uniforms;
 ```
 
 临时改参数也可以直接在控制台写 `__neon.camera.fov = 75` 之类,刷新即还原。

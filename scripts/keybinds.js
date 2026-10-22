@@ -3,37 +3,62 @@
 
 /** 可自定义的动作;数组顺序就是设置面板里的显示顺序 */
 export const KEY_ACTIONS = [
-  { id: 'moveForward', label: '前进',     def: 'KeyW' },
-  { id: 'moveBack',    label: '后退',     def: 'KeyS' },
-  { id: 'moveLeft',    label: '左移',     def: 'KeyA' },
-  { id: 'moveRight',   label: '右移',     def: 'KeyD' },
-  { id: 'run',         label: '疾跑',     def: 'ShiftLeft' },
-  { id: 'interact',    label: '交互',     def: 'KeyE' },
-  { id: 'settings',    label: '打开设置', def: 'KeyO' },
-  { id: 'lookPause',   label: '自由光标', def: 'AltLeft' },
-  { id: 'sound',       label: '音效开关', def: 'KeyM' },
+  { id: 'moveForward', label: '前进', def: 'KeyW' },
+  { id: 'moveBack', label: '后退', def: 'KeyS' },
+  { id: 'moveLeft', label: '左移', def: 'KeyA' },
+  { id: 'moveRight', label: '右移', def: 'KeyD' },
+  { id: 'run', label: '疾跑', def: 'ShiftLeft' },
+  { id: 'interact', label: '交互', def: 'KeyE' },
+  { id: 'settings', label: '打开设置', def: 'KeyO' },
+  { id: 'lookPause', label: '自由光标', def: 'AltLeft' },
+  { id: 'sound', label: '音效开关', def: 'KeyM' },
 ];
 
 /** 移动预设:除了四个移动键,交互键也一并挪开,免得跟 E 撞车 */
 export const MOVE_PRESETS = [
   {
-    id: 'wasd', name: 'WASD', desc: '左手主键区',
-    keys: { moveForward: 'KeyW', moveLeft: 'KeyA', moveBack: 'KeyS', moveRight: 'KeyD', interact: 'KeyE' },
+    id: 'wasd',
+    name: 'WASD',
+    desc: '左手主键区',
+    keys: {
+      moveForward: 'KeyW',
+      moveLeft: 'KeyA',
+      moveBack: 'KeyS',
+      moveRight: 'KeyD',
+      interact: 'KeyE',
+    },
   },
   {
-    id: 'esdf', name: 'ESDF', desc: '左手右移一格,交互改到 R',
-    keys: { moveForward: 'KeyE', moveLeft: 'KeyS', moveBack: 'KeyD', moveRight: 'KeyF', interact: 'KeyR' },
+    id: 'esdf',
+    name: 'ESDF',
+    desc: '左手右移一格,交互改到 R',
+    keys: {
+      moveForward: 'KeyE',
+      moveLeft: 'KeyS',
+      moveBack: 'KeyD',
+      moveRight: 'KeyF',
+      interact: 'KeyR',
+    },
   },
   {
-    id: 'arrows', name: '方向键', desc: '右手方向键',
-    keys: { moveForward: 'ArrowUp', moveLeft: 'ArrowLeft', moveBack: 'ArrowDown', moveRight: 'ArrowRight', interact: 'KeyE' },
+    id: 'arrows',
+    name: '方向键',
+    desc: '右手方向键',
+    keys: {
+      moveForward: 'ArrowUp',
+      moveLeft: 'ArrowLeft',
+      moveBack: 'ArrowDown',
+      moveRight: 'ArrowRight',
+      interact: 'KeyE',
+    },
   },
 ];
 
 export const BIND_STORAGE_KEY = 'neon-isle:keybinds';
 
 /** 允许绑定的 e.code;不在这里的键位一律拒绝(避免绑上 Escape 之类系统键) */
-const VALID_CODE = /^(?:Key[A-Z]|Digit[0-9]|Numpad[0-9]|Arrow(?:Up|Down|Left|Right)|F(?:[1-9]|1[0-2])|Shift(?:Left|Right)|Alt(?:Left|Right)|Control(?:Left|Right)|Space|Enter|Tab|Backspace|CapsLock|Minus|Equal|BracketLeft|BracketRight|Backslash|Semicolon|Quote|Comma|Period|Slash|Backquote)$/;
+const VALID_CODE =
+  /^(?:Key[A-Z]|Digit[0-9]|Numpad[0-9]|Arrow(?:Up|Down|Left|Right)|F(?:[1-9]|1[0-2])|Shift(?:Left|Right)|Alt(?:Left|Right)|Control(?:Left|Right)|Space|Enter|Tab|Backspace|CapsLock|Minus|Equal|BracketLeft|BracketRight|Backslash|Semicolon|Quote|Comma|Period|Slash|Backquote)$/;
 
 export function isBindableCode(code) {
   return typeof code === 'string' && VALID_CODE.test(code);
@@ -41,9 +66,12 @@ export function isBindableCode(code) {
 
 /** 左右成对的修饰键:绑一边,另一边也当作同一个键 */
 const MIRROR = {
-  ShiftLeft: 'ShiftRight', ShiftRight: 'ShiftLeft',
-  AltLeft: 'AltRight', AltRight: 'AltLeft',
-  ControlLeft: 'ControlRight', ControlRight: 'ControlLeft',
+  ShiftLeft: 'ShiftRight',
+  ShiftRight: 'ShiftLeft',
+  AltLeft: 'AltRight',
+  AltRight: 'AltLeft',
+  ControlLeft: 'ControlRight',
+  ControlRight: 'ControlLeft',
 };
 
 /** 返回左右配对的那个键码;不是成对修饰键时返回 null */
@@ -52,13 +80,32 @@ export function mirrorCode(code) {
 }
 
 const LABELS = {
-  ArrowUp: '↑', ArrowDown: '↓', ArrowLeft: '←', ArrowRight: '→',
-  ShiftLeft: 'SHIFT', ShiftRight: 'SHIFT',
-  AltLeft: 'ALT', AltRight: 'ALT',
-  ControlLeft: 'CTRL', ControlRight: 'CTRL',
-  Space: 'SPACE', Enter: 'ENTER', Tab: 'TAB', Backspace: 'BKSP', CapsLock: 'CAPS',
-  Minus: '-', Equal: '=', BracketLeft: '[', BracketRight: ']', Backslash: '\\',
-  Semicolon: ';', Quote: "'", Comma: ',', Period: '.', Slash: '/', Backquote: '`',
+  ArrowUp: '↑',
+  ArrowDown: '↓',
+  ArrowLeft: '←',
+  ArrowRight: '→',
+  ShiftLeft: 'SHIFT',
+  ShiftRight: 'SHIFT',
+  AltLeft: 'ALT',
+  AltRight: 'ALT',
+  ControlLeft: 'CTRL',
+  ControlRight: 'CTRL',
+  Space: 'SPACE',
+  Enter: 'ENTER',
+  Tab: 'TAB',
+  Backspace: 'BKSP',
+  CapsLock: 'CAPS',
+  Minus: '-',
+  Equal: '=',
+  BracketLeft: '[',
+  BracketRight: ']',
+  Backslash: '\\',
+  Semicolon: ';',
+  Quote: "'",
+  Comma: ',',
+  Period: '.',
+  Slash: '/',
+  Backquote: '`',
 };
 
 /** e.code → 键帽上的短标签 */
@@ -74,7 +121,9 @@ export function codeToLabel(code) {
 /** 默认键位表(每次返回新对象) */
 export function defaultBinds() {
   const out = {};
-  KEY_ACTIONS.forEach((a) => { out[a.id] = a.def; });
+  KEY_ACTIONS.forEach((a) => {
+    out[a.id] = a.def;
+  });
   return out;
 }
 
@@ -113,7 +162,7 @@ export function readBinds() {
     const text = localStorage.getItem(BIND_STORAGE_KEY);
     if (text) raw = JSON.parse(text);
   } catch (err) {
-    raw = null;   // 隐私模式 / 存储被禁用 / JSON 损坏
+    raw = null; // 隐私模式 / 存储被禁用 / JSON 损坏
   }
   return normalize(raw);
 }
@@ -122,7 +171,9 @@ export function readBinds() {
 export function writeBinds(binds) {
   try {
     localStorage.setItem(BIND_STORAGE_KEY, JSON.stringify(binds));
-  } catch (err) { /* 存储失败忽略 */ }
+  } catch (err) {
+    /* 存储失败忽略 */
+  }
 }
 
 /**

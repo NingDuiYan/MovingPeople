@@ -3,20 +3,20 @@
 // [写实化] 天穹与海面由 main.js 的 Sky(大气散射)/Water(平面反射)接管
 // [写实化] 地形叠加真实草地 PBR 贴图
 // [碰撞] 实心道具登记到 obstacles,由 main.js 把角色挡在体外
-import { ISLAND_RADIUS, WATER_LEVEL, heightAt, rng, clamp } from './utils.js';
+import { ISLAND_RADIUS, heightAt, rng, clamp } from './utils.js';
 import { makeGlowTexture, makeWindowTexture, makeSignTexture, makeDotTexture } from './assets.js';
 
 const NEON_CYAN = 0x00f0ff;
 const NEON_MAGENTA = 0xff2d95;
 const NEON_VIOLET = 0x7a4dff;
 
-
-
 export function buildIsland(THREE, scene) {
   const R = ISLAND_RADIUS;
   const rand = rng(20240521);
   // 出生点(与 main.js 的 2,2 保持一致)周围留出净空,避免近景道具挡住镜头
-  const SPAWN_X = 2, SPAWN_Z = 2, SPAWN_CLEAR = 9;
+  const SPAWN_X = 2,
+    SPAWN_Z = 2,
+    SPAWN_CLEAR = 9;
   const nearSpawn = (x, z) => Math.hypot(x - SPAWN_X, z - SPAWN_Z) < SPAWN_CLEAR;
   const interactives = [];
   const updaters = [];
@@ -29,33 +29,52 @@ export function buildIsland(THREE, scene) {
   const glowViolet = makeGlowTexture(THREE, NEON_VIOLET);
 
   function addSprite(tex, x, y, z, size, opacity) {
-    const sp = new THREE.Sprite(new THREE.SpriteMaterial({
-      map: tex, transparent: true, opacity: opacity, depthWrite: false,
-      blending: THREE.AdditiveBlending, fog: false,
-    }));
+    const sp = new THREE.Sprite(
+      new THREE.SpriteMaterial({
+        map: tex,
+        transparent: true,
+        opacity: opacity,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+        fog: false,
+      }),
+    );
     sp.position.set(x, y, z);
     sp.scale.set(size, size, 1);
     scene.add(sp);
     return sp;
   }
 
-    // ============================================================
+  // ============================================================
   // 1. [写实化] 天穹/海面:改由 main.js 用 Sky+Water 接管
   // ============================================================
 
-// ============================================================
+  // ============================================================
   // 2. 远景城市天际线
   // ============================================================
   const winTex = makeWindowTexture(THREE, 4471);
   const cityMat = new THREE.MeshStandardMaterial({
-    color: 0x0a1120, roughness: 0.85, metalness: 0.3,
-    emissive: 0xffffff, emissiveMap: winTex, emissiveIntensity: 0.85, fog: true,
+    color: 0x0a1120,
+    roughness: 0.85,
+    metalness: 0.3,
+    emissive: 0xffffff,
+    emissiveMap: winTex,
+    emissiveIntensity: 0.85,
+    fog: true,
   });
   const cityCapMat = new THREE.MeshBasicMaterial({
-    color: NEON_CYAN, transparent: true, opacity: 0.75, blending: THREE.AdditiveBlending, depthWrite: false,
+    color: NEON_CYAN,
+    transparent: true,
+    opacity: 0.75,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
   });
   const cityCapMatM = new THREE.MeshBasicMaterial({
-    color: NEON_MAGENTA, transparent: true, opacity: 0.75, blending: THREE.AdditiveBlending, depthWrite: false,
+    color: NEON_MAGENTA,
+    transparent: true,
+    opacity: 0.75,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
   });
   const cityGroup = new THREE.Group();
   const cityCount = 66;
@@ -73,7 +92,10 @@ export function buildIsland(THREE, scene) {
     cityGroup.add(b);
     // 顶部灯标
     if (rand() > 0.42) {
-      const cap = new THREE.Mesh(new THREE.BoxGeometry(w * 0.55, 0.7, d * 0.55), rand() > 0.72 ? cityCapMatM : cityCapMat);
+      const cap = new THREE.Mesh(
+        new THREE.BoxGeometry(w * 0.55, 0.7, d * 0.55),
+        rand() > 0.72 ? cityCapMatM : cityCapMat,
+      );
       cap.position.set(x, hh - 2.6, z);
       cityGroup.add(cap);
     }
@@ -95,27 +117,38 @@ export function buildIsland(THREE, scene) {
       new THREE.PlaneGeometry(46, 9),
       new THREE.MeshBasicMaterial({
         map: makeSignTexture(THREE, 'NEON', i % 2 ? '#ff2d95' : '#00f0ff'),
-        transparent: true, opacity: 0.22, blending: THREE.AdditiveBlending,
-        depthWrite: false, side: THREE.DoubleSide, fog: false,
+        transparent: true,
+        opacity: 0.22,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        side: THREE.DoubleSide,
+        fog: false,
       }),
     );
     mesh.position.set(Math.cos(a) * rr, 34 + rand() * 40, Math.sin(a) * rr);
     scene.add(mesh);
-    updaters.push((dt, t) => { mesh.rotation.y = t * 0.09 + a; });
+    updaters.push((dt, t) => {
+      mesh.rotation.y = t * 0.09 + a;
+    });
   }
-
 
   // 海岸浪花环
   const foam = new THREE.Mesh(
-    new THREE.RingGeometry(R * 0.70, R * 0.99, 96, 1).rotateX(-Math.PI / 2),
+    new THREE.RingGeometry(R * 0.7, R * 0.99, 96, 1).rotateX(-Math.PI / 2),
     new THREE.MeshBasicMaterial({
-      color: 0x2fd8ff, transparent: true, opacity: 0.16,
-      blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide,
+      color: 0x2fd8ff,
+      transparent: true,
+      opacity: 0.16,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      side: THREE.DoubleSide,
     }),
   );
   foam.position.y = 0.06;
   scene.add(foam);
-  updaters.push((dt, t) => { foam.material.opacity = 0.10 + 0.09 * (0.5 + 0.5 * Math.sin(t * 1.5)); });
+  updaters.push((dt, t) => {
+    foam.material.opacity = 0.1 + 0.09 * (0.5 + 0.5 * Math.sin(t * 1.5));
+  });
 
   // ============================================================
   // 4. 地形
@@ -148,7 +181,8 @@ export function buildIsland(THREE, scene) {
     else if (h < 5.2) tmpC.copy(cMoss).lerp(cRock, (h - 4.0) / 1.2);
     else tmpC.copy(cRock).lerp(cPeak, clamp((h - 5.2) / 2.4, 0, 1));
     // 低频斑驳,避免大片纯色
-    const mottle = 0.94 + 0.12 * (0.5 + 0.5 * Math.sin(x * 0.62 + z * 0.41) * Math.cos(x * 0.21 - z * 0.53));
+    const mottle =
+      0.94 + 0.12 * (0.5 + 0.5 * Math.sin(x * 0.62 + z * 0.41) * Math.cos(x * 0.21 - z * 0.53));
     tmpC2.copy(tmpC).multiplyScalar(mottle);
     colors[i * 3] = tmpC2.r;
     colors[i * 3 + 1] = tmpC2.g;
@@ -165,26 +199,34 @@ export function buildIsland(THREE, scene) {
 
   const terrainMat = new THREE.MeshStandardMaterial({
     map: grassTex,
-    vertexColors: true, roughness: 0.92, metalness: 0.04,
+    vertexColors: true,
+    roughness: 0.92,
+    metalness: 0.04,
   });
   // 地表细节:世界坐标网格 + 等高线 + 边缘菲涅尔辉光,注入标准材质着色器
   terrainMat.onBeforeCompile = (shader) => {
     shader.vertexShader = shader.vertexShader
       .replace('#include <common>', '#include <common>\nvarying vec3 vWPos;')
-      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvWPos = (modelMatrix * vec4(transformed, 1.0)).xyz;');
+      .replace(
+        '#include <begin_vertex>',
+        '#include <begin_vertex>\nvWPos = (modelMatrix * vec4(transformed, 1.0)).xyz;',
+      );
     shader.fragmentShader = shader.fragmentShader
       .replace('#include <common>', '#include <common>\nvarying vec3 vWPos;')
-      .replace('#include <emissivemap_fragment>', [
+      .replace(
         '#include <emissivemap_fragment>',
-        // 沙滩带:低海拔处把草地贴图压向暖沙色,保留贴图明暗细节
-        'float sandW = 1.0 - smoothstep(0.35, 1.55, vWPos.y);',
-        'float mLum = dot(diffuseColor.rgb, vec3(0.299, 0.587, 0.114));',
-        'vec3 sandCol = vec3(0.66, 0.58, 0.43) * (0.55 + 1.05 * mLum);',
-        'diffuseColor.rgb = mix(diffuseColor.rgb, sandCol, clamp(sandW, 0.0, 1.0));',
-        // 岩石带:高海拔去饱和并压暗,形成裸岩质感
-        'float rockW = smoothstep(4.0, 5.6, vWPos.y);',
-        'diffuseColor.rgb = mix(diffuseColor.rgb, vec3(mLum) * vec3(0.92, 0.94, 1.0), rockW * 0.75);',
-      ].join('\n'));
+        [
+          '#include <emissivemap_fragment>',
+          // 沙滩带:低海拔处把草地贴图压向暖沙色,保留贴图明暗细节
+          'float sandW = 1.0 - smoothstep(0.35, 1.55, vWPos.y);',
+          'float mLum = dot(diffuseColor.rgb, vec3(0.299, 0.587, 0.114));',
+          'vec3 sandCol = vec3(0.66, 0.58, 0.43) * (0.55 + 1.05 * mLum);',
+          'diffuseColor.rgb = mix(diffuseColor.rgb, sandCol, clamp(sandW, 0.0, 1.0));',
+          // 岩石带:高海拔去饱和并压暗,形成裸岩质感
+          'float rockW = smoothstep(4.0, 5.6, vWPos.y);',
+          'diffuseColor.rgb = mix(diffuseColor.rgb, vec3(mLum) * vec3(0.92, 0.94, 1.0), rockW * 0.75);',
+        ].join('\n'),
+      );
   };
   terrainMat.customProgramCacheKey = () => 'terrain-detail';
   const terrain = new THREE.Mesh(geo, terrainMat);
@@ -195,8 +237,11 @@ export function buildIsland(THREE, scene) {
   const shoreLine = new THREE.Mesh(
     new THREE.TorusGeometry(R * 0.76, 0.055, 6, 120).rotateX(Math.PI / 2),
     new THREE.MeshBasicMaterial({
-      color: NEON_CYAN, transparent: true, opacity: 0.24,
-      blending: THREE.AdditiveBlending, depthWrite: false,
+      color: NEON_CYAN,
+      transparent: true,
+      opacity: 0.24,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
     }),
   );
   shoreLine.position.y = 0.1;
@@ -208,8 +253,11 @@ export function buildIsland(THREE, scene) {
   const ring = new THREE.Mesh(
     new THREE.TorusGeometry(R + 1.2, 0.09, 8, 160).rotateX(Math.PI / 2),
     new THREE.MeshBasicMaterial({
-      color: NEON_CYAN, transparent: true, opacity: 0.4,
-      blending: THREE.AdditiveBlending, depthWrite: false,
+      color: NEON_CYAN,
+      transparent: true,
+      opacity: 0.4,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
     }),
   );
   ring.position.y = 0.15;
@@ -221,7 +269,11 @@ export function buildIsland(THREE, scene) {
   // 栅栏立柱光点
   const postGeo = new THREE.CylinderGeometry(0.09, 0.09, 1.5, 5);
   const postMat = new THREE.MeshBasicMaterial({
-    color: NEON_CYAN, transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending, depthWrite: false,
+    color: NEON_CYAN,
+    transparent: true,
+    opacity: 0.5,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
   });
   const postCount = 56;
   for (let i = 0; i < postCount; i++) {
@@ -235,21 +287,31 @@ export function buildIsland(THREE, scene) {
   // 6. 岩层
   // ============================================================
   const rockGeo = new THREE.DodecahedronGeometry(1, 0);
-  const rockMat = new THREE.MeshStandardMaterial({ color: 0x121824, roughness: 0.96, flatShading: true });
-  const rockEdgeMat = new THREE.MeshStandardMaterial({
-    color: 0x05070c, emissive: 0x1a4d63, emissiveIntensity: 0.7, roughness: 0.8, flatShading: true,
+  const rockMat = new THREE.MeshStandardMaterial({
+    color: 0x121824,
+    roughness: 0.96,
+    flatShading: true,
   });
-  let placed = 0, guard = 0;
+  const rockEdgeMat = new THREE.MeshStandardMaterial({
+    color: 0x05070c,
+    emissive: 0x1a4d63,
+    emissiveIntensity: 0.7,
+    roughness: 0.8,
+    flatShading: true,
+  });
+  let placed = 0,
+    guard = 0;
   while (placed < 55 && guard++ < 800) {
     const a = rand() * Math.PI * 2;
     const rr = 6 + rand() * (R * 0.78);
-    const x = Math.cos(a) * rr, z = Math.sin(a) * rr;
+    const x = Math.cos(a) * rr,
+      z = Math.sin(a) * rr;
     const h = heightAt(x, z);
     if (h < 0.5 || nearSpawn(x, z)) continue;
     const m = new THREE.Mesh(rockGeo, rand() > 0.72 ? rockEdgeMat : rockMat);
     m.position.set(x, h + 0.1, z);
     const sc = 0.45 + rand() * 1.55;
-    const sy = sc * (0.5 + rand() * 0.8);   // 先取值,保持随机序列与旧版一致
+    const sy = sc * (0.5 + rand() * 0.8); // 先取值,保持随机序列与旧版一致
     m.scale.set(sc, sy, sc);
     m.rotation.set(rand() * Math.PI, rand() * Math.PI, rand() * Math.PI);
     m.castShadow = true;
@@ -265,27 +327,40 @@ export function buildIsland(THREE, scene) {
   // 7. 霓虹晶簇
   // ============================================================
   const crysCyan = new THREE.MeshStandardMaterial({
-    color: 0x061c22, emissive: NEON_CYAN, emissiveIntensity: 1.7, roughness: 0.25, metalness: 0.2, flatShading: true,
+    color: 0x061c22,
+    emissive: NEON_CYAN,
+    emissiveIntensity: 1.7,
+    roughness: 0.25,
+    metalness: 0.2,
+    flatShading: true,
   });
   const crysMag = new THREE.MeshStandardMaterial({
-    color: 0x220a16, emissive: NEON_MAGENTA, emissiveIntensity: 1.5, roughness: 0.25, metalness: 0.2, flatShading: true,
+    color: 0x220a16,
+    emissive: NEON_MAGENTA,
+    emissiveIntensity: 1.5,
+    roughness: 0.25,
+    metalness: 0.2,
+    flatShading: true,
   });
   const shardGeo = new THREE.CylinderGeometry(1, 0.35, 1, 6, 1);
   const tipGeo = new THREE.ConeGeometry(0.35, 1, 6, 1);
-  placed = 0; guard = 0;
+  placed = 0;
+  guard = 0;
   while (placed < 30 && guard++ < 700) {
     const a = rand() * Math.PI * 2;
     const rr = 5 + rand() * (R * 0.72);
-    const x = Math.cos(a) * rr, z = Math.sin(a) * rr;
+    const x = Math.cos(a) * rr,
+      z = Math.sin(a) * rr;
     const h = heightAt(x, z);
     if (h < 0.7 || nearSpawn(x, z)) continue;
     const isCyan = rand() > 0.48;
     const mat = isCyan ? crysCyan : crysMag;
     const n = 2 + Math.floor(rand() * 4);
     for (let i = 0; i < n; i++) {
-      const cw = 0.09 + rand() * 0.20;
+      const cw = 0.09 + rand() * 0.2;
       const ch = 0.5 + rand() * 2.1;
-      const ox = (rand() - 0.5) * 1.4, oz = (rand() - 0.5) * 1.4;
+      const ox = (rand() - 0.5) * 1.4,
+        oz = (rand() - 0.5) * 1.4;
       const tilt = (rand() - 0.5) * 0.42;
       const shard = new THREE.Mesh(shardGeo, mat);
       shard.scale.set(cw, ch, cw);
@@ -293,7 +368,7 @@ export function buildIsland(THREE, scene) {
       shard.rotation.set(tilt, rand() * Math.PI, (rand() - 0.5) * 0.42);
       shard.castShadow = true;
       scene.add(shard);
-      addObstacle(x + ox, z + oz, Math.max(cw, 0.10), h + ch * 1.1);
+      addObstacle(x + ox, z + oz, Math.max(cw, 0.1), h + ch * 1.1);
       const tip = new THREE.Mesh(tipGeo, mat);
       tip.scale.set(cw, ch * 0.4, cw);
       tip.position.set(x + ox, h + ch * 0.92, z + oz);
@@ -304,20 +379,27 @@ export function buildIsland(THREE, scene) {
     const gl = new THREE.Mesh(
       new THREE.CircleGeometry(1.15, 20).rotateX(-Math.PI / 2),
       new THREE.MeshBasicMaterial({
-        color: isCyan ? NEON_CYAN : NEON_MAGENTA, transparent: true,
-        opacity: 0.14, blending: THREE.AdditiveBlending, depthWrite: false,
+        color: isCyan ? NEON_CYAN : NEON_MAGENTA,
+        transparent: true,
+        opacity: 0.14,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
       }),
     );
     gl.position.set(x, h + 0.03, z);
     scene.add(gl);
-    addSprite(isCyan ? glowCyan : glowMag, x, h + 0.9, z, 1.6, 0.20);
+    addSprite(isCyan ? glowCyan : glowMag, x, h + 0.9, z, 1.6, 0.2);
     placed++;
   }
 
   // ============================================================
   // 8. 数据塔群
   // ============================================================
-  const towerMat = new THREE.MeshStandardMaterial({ color: 0x0d1219, roughness: 0.5, metalness: 0.55 });
+  const towerMat = new THREE.MeshStandardMaterial({
+    color: 0x0d1219,
+    roughness: 0.5,
+    metalness: 0.55,
+  });
   const towerSpots = [
     { x: 18, z: -8, h: 12, c: NEON_CYAN },
     { x: -20, z: 4, h: 9.5, c: NEON_MAGENTA },
@@ -332,7 +414,7 @@ export function buildIsland(THREE, scene) {
     const segs = 4;
     for (let i = 0; i < segs; i++) {
       const sh = sp.h / segs;
-      const w = 0.85 - i * 0.10;
+      const w = 0.85 - i * 0.1;
       const body = new THREE.Mesh(new THREE.BoxGeometry(w, sh * 0.94, w), towerMat);
       body.position.y = sh * (i + 0.5);
       body.castShadow = true;
@@ -340,7 +422,13 @@ export function buildIsland(THREE, scene) {
       // 段间发光带
       const band = new THREE.Mesh(
         new THREE.BoxGeometry(w * 1.06, 0.06, w * 1.06),
-        new THREE.MeshBasicMaterial({ color: sp.c, transparent: true, opacity: 0.7, blending: THREE.AdditiveBlending, depthWrite: false }),
+        new THREE.MeshBasicMaterial({
+          color: sp.c,
+          transparent: true,
+          opacity: 0.7,
+          blending: THREE.AdditiveBlending,
+          depthWrite: false,
+        }),
       );
       band.position.y = sh * (i + 1);
       grp.add(band);
@@ -348,14 +436,25 @@ export function buildIsland(THREE, scene) {
     // 顶帽
     const cap = new THREE.Mesh(
       new THREE.BoxGeometry(1.25, 0.45, 1.25),
-      new THREE.MeshStandardMaterial({ color: 0x07080c, emissive: sp.c, emissiveIntensity: 2.6, roughness: 0.4 }),
+      new THREE.MeshStandardMaterial({
+        color: 0x07080c,
+        emissive: sp.c,
+        emissiveIntensity: 2.6,
+        roughness: 0.4,
+      }),
     );
     cap.position.y = sp.h + 0.22;
     grp.add(cap);
     // 环绕全息环
     const holo = new THREE.Mesh(
       new THREE.TorusGeometry(2.0, 0.035, 6, 64),
-      new THREE.MeshBasicMaterial({ color: sp.c, transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false }),
+      new THREE.MeshBasicMaterial({
+        color: sp.c,
+        transparent: true,
+        opacity: 0.55,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      }),
     );
     holo.position.y = sp.h + 1.0;
     holo.rotation.x = Math.PI / 2;
@@ -367,8 +466,14 @@ export function buildIsland(THREE, scene) {
     const lamp = new THREE.PointLight(sp.c, 70, 32, 2);
     lamp.position.set(sp.x, gy + sp.h + 1.3, sp.z);
     scene.add(lamp);
-    addSprite(sp.c === NEON_CYAN ? glowCyan : sp.c === NEON_MAGENTA ? glowMag : glowViolet,
-      sp.x, gy + sp.h + 0.6, sp.z, 7, 0.55);
+    addSprite(
+      sp.c === NEON_CYAN ? glowCyan : sp.c === NEON_MAGENTA ? glowMag : glowViolet,
+      sp.x,
+      gy + sp.h + 0.6,
+      sp.z,
+      7,
+      0.55,
+    );
 
     towerTops.push(new THREE.Vector3(sp.x, gy + sp.h + 1.0, sp.z));
     updaters.push((dt, t) => {
@@ -380,8 +485,11 @@ export function buildIsland(THREE, scene) {
 
   // 塔间悬空电缆
   const cableMat = new THREE.MeshBasicMaterial({
-    color: NEON_CYAN, transparent: true, opacity: 0.32,
-    blending: THREE.AdditiveBlending, depthWrite: false,
+    color: NEON_CYAN,
+    transparent: true,
+    opacity: 0.32,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
   });
   for (let i = 0; i < towerTops.length; i++) {
     const a = towerTops[i];
@@ -395,13 +503,22 @@ export function buildIsland(THREE, scene) {
   // ============================================================
   // 9. 光柱
   // ============================================================
-  for (const [px, pz, c, rad] of [[18, -8, NEON_CYAN, 3.0], [-20, 4, NEON_MAGENTA, 2.6], [-4, 18, NEON_VIOLET, 2.4]]) {
+  for (const [px, pz, c, rad] of [
+    [18, -8, NEON_CYAN, 3.0],
+    [-20, 4, NEON_MAGENTA, 2.6],
+    [-4, 18, NEON_VIOLET, 2.4],
+  ]) {
     const gy = heightAt(px, pz);
     const pillar = new THREE.Mesh(
       new THREE.CylinderGeometry(rad * 0.55, rad, 78, 26, 1, true),
       new THREE.MeshBasicMaterial({
-        color: c, transparent: true, opacity: 0.06,
-        blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, fog: false,
+        color: c,
+        transparent: true,
+        opacity: 0.06,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        side: THREE.DoubleSide,
+        fog: false,
       }),
     );
     pillar.position.set(px, gy + 39, pz);
@@ -416,14 +533,16 @@ export function buildIsland(THREE, scene) {
   // ============================================================
   function makeBillboardTexture(text, color) {
     const cv = document.createElement('canvas');
-    cv.width = 512; cv.height = 96;
+    cv.width = 512;
+    cv.height = 96;
     const ctx = cv.getContext('2d');
     ctx.clearRect(0, 0, cv.width, cv.height);
     ctx.font = 'bold 42px "Share Tech Mono", monospace';
     ctx.fillStyle = color;
     ctx.shadowColor = color;
     ctx.shadowBlur = 18;
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
     ctx.fillText(text, 256, 48);
     const tex = new THREE.CanvasTexture(cv);
     tex.colorSpace = THREE.SRGBColorSpace;
@@ -439,8 +558,12 @@ export function buildIsland(THREE, scene) {
     const mesh = new THREE.Mesh(
       new THREE.PlaneGeometry(9.5, 1.8),
       new THREE.MeshBasicMaterial({
-        map: makeBillboardTexture(b.txt, b.c), transparent: true, opacity: 0.46,
-        blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide,
+        map: makeBillboardTexture(b.txt, b.c),
+        transparent: true,
+        opacity: 0.46,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        side: THREE.DoubleSide,
       }),
     );
     const baseY = heightAt(b.x, b.z) + b.y;
@@ -449,14 +572,18 @@ export function buildIsland(THREE, scene) {
     updaters.push((dt, t) => {
       mesh.rotation.y = t * 0.26 + b.x * 0.7;
       mesh.position.y = baseY + Math.sin(t * 0.8 + b.z) * 0.24;
-      mesh.material.opacity = 0.40 + 0.09 * (0.5 + 0.5 * Math.sin(t * 1.7 + b.x));
+      mesh.material.opacity = 0.4 + 0.09 * (0.5 + 0.5 * Math.sin(t * 1.7 + b.x));
     });
   }
 
   // ============================================================
   // 11. 栈桥与码头
   // ============================================================
-  const plankMat = new THREE.MeshStandardMaterial({ color: 0x141a26, roughness: 0.9, metalness: 0.15 });
+  const plankMat = new THREE.MeshStandardMaterial({
+    color: 0x141a26,
+    roughness: 0.9,
+    metalness: 0.15,
+  });
   const bridgeA = Math.PI * 0.34;
   const bridgeGrp = new THREE.Group();
   const plankN = 22;
@@ -475,7 +602,13 @@ export function buildIsland(THREE, scene) {
       for (const sgn of [-1, 1]) {
         const rail = new THREE.Mesh(
           new THREE.BoxGeometry(0.1, 0.1, 0.32),
-          new THREE.MeshBasicMaterial({ color: NEON_CYAN, transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending, depthWrite: false }),
+          new THREE.MeshBasicMaterial({
+            color: NEON_CYAN,
+            transparent: true,
+            opacity: 0.85,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false,
+          }),
         );
         const off = 0.72 * sgn;
         rail.position.set(
@@ -499,7 +632,11 @@ export function buildIsland(THREE, scene) {
   // 码头集装箱
   const containerPalette = [0x0e2a33, 0x2a0e1c, 0x131a2a, 0x1a1420];
   const containerSpots = [
-    [30, 26, 1], [33, 24, 2], [28, 30, 1], [-32, 20, 1], [-28, 24, 2],
+    [30, 26, 1],
+    [33, 24, 2],
+    [28, 30, 1],
+    [-32, 20, 1],
+    [-28, 24, 2],
   ];
   for (const [cx, cz, stack] of containerSpots) {
     const gy = Math.max(heightAt(cx, cz), 0.3);
@@ -508,7 +645,8 @@ export function buildIsland(THREE, scene) {
         new THREE.BoxGeometry(4.4, 2.3, 2.3),
         new THREE.MeshStandardMaterial({
           color: containerPalette[Math.abs(s * 3 + cx) % containerPalette.length],
-          roughness: 0.82, metalness: 0.25,
+          roughness: 0.82,
+          metalness: 0.25,
         }),
       );
       box.position.set(cx, gy + 1.15 + s * 2.35, cz);
@@ -519,15 +657,22 @@ export function buildIsland(THREE, scene) {
       // 长方体箱体:沿长轴排 3 枚圆形碰撞体,近似矩形轮廓并保留圆角手感
       const bry = box.rotation.y;
       for (let k = -1; k <= 1; k++) {
-        addObstacle(cx + Math.cos(bry) * k * 1.4, cz - Math.sin(bry) * k * 1.4,
-          1.25, gy + 2.3 + s * 2.35);
+        addObstacle(
+          cx + Math.cos(bry) * k * 1.4,
+          cz - Math.sin(bry) * k * 1.4,
+          1.25,
+          gy + 2.3 + s * 2.35,
+        );
       }
       // 角标灯
       const strip = new THREE.Mesh(
         new THREE.BoxGeometry(4.5, 0.06, 2.4),
         new THREE.MeshBasicMaterial({
           color: (s + cx) % 2 ? NEON_MAGENTA : NEON_CYAN,
-          transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false,
+          transparent: true,
+          opacity: 0.55,
+          blending: THREE.AdditiveBlending,
+          depthWrite: false,
         }),
       );
       strip.position.set(cx, gy + 2.3 + s * 2.35, cz);
@@ -537,13 +682,30 @@ export function buildIsland(THREE, scene) {
   }
 
   // 管道:贴地输能管线 + 支撑墩 + 节点阀
-  const pipeMat = new THREE.MeshStandardMaterial({ color: 0x18202c, roughness: 0.45, metalness: 0.7 });
+  const pipeMat = new THREE.MeshStandardMaterial({
+    color: 0x18202c,
+    roughness: 0.45,
+    metalness: 0.7,
+  });
   const pipeGlowMat = new THREE.MeshBasicMaterial({
-    color: NEON_CYAN, transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending, depthWrite: false,
+    color: NEON_CYAN,
+    transparent: true,
+    opacity: 0.5,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
   });
   const pipePaths = [
-    [[16, -6, 0.95], [12, 2, 0.9], [4, 10, 0.85], [-4, 16, 0.8]],
-    [[22, 12, 0.8], [14, 18, 0.75], [6, 24, 0.7]],
+    [
+      [16, -6, 0.95],
+      [12, 2, 0.9],
+      [4, 10, 0.85],
+      [-4, 16, 0.8],
+    ],
+    [
+      [22, 12, 0.8],
+      [14, 18, 0.75],
+      [6, 24, 0.7],
+    ],
   ];
   for (const path of pipePaths) {
     const pts = path.map(([x, z, y]) => new THREE.Vector3(x, heightAt(x, z) + y, z));
@@ -564,7 +726,13 @@ export function buildIsland(THREE, scene) {
       scene.add(joint);
       const cap = new THREE.Mesh(
         new THREE.CylinderGeometry(0.52, 0.52, 0.06, 8),
-        new THREE.MeshBasicMaterial({ color: NEON_CYAN, transparent: true, opacity: 0.75, blending: THREE.AdditiveBlending, depthWrite: false }),
+        new THREE.MeshBasicMaterial({
+          color: NEON_CYAN,
+          transparent: true,
+          opacity: 0.75,
+          blending: THREE.AdditiveBlending,
+          depthWrite: false,
+        }),
       );
       cap.position.set(p.x, p.y + 0.32, p.z);
       scene.add(cap);
@@ -582,7 +750,8 @@ export function buildIsland(THREE, scene) {
   for (let i = 0; i < lanternN; i++) {
     const a = rand() * Math.PI * 2;
     const rr = 6 + rand() * (R * 0.72);
-    const x = Math.cos(a) * rr, z = Math.sin(a) * rr;
+    const x = Math.cos(a) * rr,
+      z = Math.sin(a) * rr;
     const gy = heightAt(x, z);
     if (gy < 0.4) continue;
     const hgt = 2.2 + rand() * 5.5;
@@ -591,7 +760,10 @@ export function buildIsland(THREE, scene) {
       new THREE.SphereGeometry(0.16, 10, 8),
       new THREE.MeshBasicMaterial({
         color: isMag ? 0xffb0d8 : 0xbdf6ff,
-        transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false,
+        transparent: true,
+        opacity: 0.9,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
       }),
     );
     orb.position.set(x, gy + hgt, z);
@@ -612,7 +784,8 @@ export function buildIsland(THREE, scene) {
   const pPos = new Float32Array(PN * 3);
   const pSpeed = new Float32Array(PN);
   for (let i = 0; i < PN; i++) {
-    const a = rand() * Math.PI * 2, rr = rand() * 78;
+    const a = rand() * Math.PI * 2,
+      rr = rand() * 78;
     pPos[i * 3] = Math.cos(a) * rr;
     pPos[i * 3 + 1] = rand() * 30;
     pPos[i * 3 + 2] = Math.sin(a) * rr;
@@ -620,10 +793,20 @@ export function buildIsland(THREE, scene) {
   }
   const pGeo = new THREE.BufferGeometry();
   pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
-  const points = new THREE.Points(pGeo, new THREE.PointsMaterial({
-    map: makeDotTexture(THREE), color: 0x35e0ff, size: 0.30, transparent: true, opacity: 0.5,
-    alphaTest: 0.01, blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true,
-  }));
+  const points = new THREE.Points(
+    pGeo,
+    new THREE.PointsMaterial({
+      map: makeDotTexture(THREE),
+      color: 0x35e0ff,
+      size: 0.3,
+      transparent: true,
+      opacity: 0.5,
+      alphaTest: 0.01,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      sizeAttenuation: true,
+    }),
+  );
   scene.add(points);
   updaters.push((dt) => {
     const arr = pGeo.attributes.position.array;
@@ -639,8 +822,10 @@ export function buildIsland(THREE, scene) {
   const fPos = new Float32Array(FN * 3);
   const fPhase = new Float32Array(FN);
   for (let i = 0; i < FN; i++) {
-    const a = rand() * Math.PI * 2, rr = rand() * (R * 0.9);
-    const x = Math.cos(a) * rr, z = Math.sin(a) * rr;
+    const a = rand() * Math.PI * 2,
+      rr = rand() * (R * 0.9);
+    const x = Math.cos(a) * rr,
+      z = Math.sin(a) * rr;
     fPos[i * 3] = x;
     fPos[i * 3 + 1] = Math.max(heightAt(x, z), 0) + 0.4 + rand() * 3.4;
     fPos[i * 3 + 2] = z;
@@ -648,10 +833,19 @@ export function buildIsland(THREE, scene) {
   }
   const fGeo = new THREE.BufferGeometry();
   fGeo.setAttribute('position', new THREE.BufferAttribute(fPos, 3));
-  const flies = new THREE.Points(fGeo, new THREE.PointsMaterial({
-    map: makeDotTexture(THREE), color: 0x7ef0ff, size: 0.26, transparent: true, opacity: 0.35,
-    blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true,
-  }));
+  const flies = new THREE.Points(
+    fGeo,
+    new THREE.PointsMaterial({
+      map: makeDotTexture(THREE),
+      color: 0x7ef0ff,
+      size: 0.26,
+      transparent: true,
+      opacity: 0.35,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      sizeAttenuation: true,
+    }),
+  );
   scene.add(flies);
   updaters.push((dt, t) => {
     const arr = fGeo.attributes.position.array;
@@ -670,7 +864,13 @@ export function buildIsland(THREE, scene) {
     const gy = Math.max(heightAt(x, z), -0.22) + 0.03;
     const disc = new THREE.Mesh(
       new THREE.CircleGeometry(radius, 26).rotateX(-Math.PI / 2),
-      new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.22, blending: THREE.AdditiveBlending, depthWrite: false }),
+      new THREE.MeshBasicMaterial({
+        color,
+        transparent: true,
+        opacity: 0.22,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      }),
     );
     disc.position.set(x, gy, z);
     scene.add(disc);
@@ -682,7 +882,8 @@ export function buildIsland(THREE, scene) {
 
   // 1) 数据终端 DL-07
   {
-    const x = 10, z = -4;
+    const x = 10,
+      z = -4;
     const gy = heightAt(x, z);
     const grp = new THREE.Group();
     const base = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 1.15, 0.55, 8), towerMat);
@@ -696,13 +897,24 @@ export function buildIsland(THREE, scene) {
     consoleBox.castShadow = true;
     const screen = new THREE.Mesh(
       new THREE.PlaneGeometry(1.02, 0.62),
-      new THREE.MeshStandardMaterial({ color: 0x03141c, emissive: NEON_CYAN, emissiveIntensity: 2.2 }),
+      new THREE.MeshStandardMaterial({
+        color: 0x03141c,
+        emissive: NEON_CYAN,
+        emissiveIntensity: 2.2,
+      }),
     );
     screen.position.set(0, 1.62, 0.29);
     screen.rotation.x = -0.28;
     const holo = new THREE.Mesh(
       new THREE.ConeGeometry(0.95, 2.1, 4, 1, true),
-      new THREE.MeshBasicMaterial({ color: NEON_CYAN, transparent: true, opacity: 0.3, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }),
+      new THREE.MeshBasicMaterial({
+        color: NEON_CYAN,
+        transparent: true,
+        opacity: 0.3,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        side: THREE.DoubleSide,
+      }),
     );
     holo.position.y = 3.0;
     holo.rotation.y = Math.PI / 4;
@@ -717,21 +929,42 @@ export function buildIsland(THREE, scene) {
       screen.material.emissiveIntensity = 1.9 + 0.7 * (0.5 + 0.5 * Math.sin(t * 3.4));
     });
     addObstacle(x, z, 0.85, gy + 1.7);
-    interactives.push({ name: '数据终端 DL-07', kind: 'terminal', pos: new THREE.Vector3(x, gy, z) });
+    interactives.push({
+      name: '数据终端 DL-07',
+      kind: 'terminal',
+      pos: new THREE.Vector3(x, gy, z),
+    });
   }
 
   // 2) NPC 维修机器人 R-7
   {
-    const x = -12, z = 8;
+    const x = -12,
+      z = 8;
     const gy = heightAt(x, z);
     const grp = new THREE.Group();
-    const botMat = new THREE.MeshStandardMaterial({ color: 0x161d2a, roughness: 0.42, metalness: 0.65 });
-    const botTrim = new THREE.MeshStandardMaterial({ color: 0x0a2a33, emissive: NEON_CYAN, emissiveIntensity: 1.6, roughness: 0.4 });
-    const eyeMat = new THREE.MeshStandardMaterial({ color: 0x03141c, emissive: NEON_CYAN, emissiveIntensity: 3.0 });
+    const botMat = new THREE.MeshStandardMaterial({
+      color: 0x161d2a,
+      roughness: 0.42,
+      metalness: 0.65,
+    });
+    const botTrim = new THREE.MeshStandardMaterial({
+      color: 0x0a2a33,
+      emissive: NEON_CYAN,
+      emissiveIntensity: 1.6,
+      roughness: 0.4,
+    });
+    const eyeMat = new THREE.MeshStandardMaterial({
+      color: 0x03141c,
+      emissive: NEON_CYAN,
+      emissiveIntensity: 3.0,
+    });
     const body = new THREE.Mesh(new THREE.SphereGeometry(0.46, 16, 12), botMat);
     body.scale.set(1, 0.8, 1);
     body.position.y = 0.62;
-    const beltR = new THREE.Mesh(new THREE.TorusGeometry(0.44, 0.045, 6, 24).rotateX(Math.PI / 2), botTrim);
+    const beltR = new THREE.Mesh(
+      new THREE.TorusGeometry(0.44, 0.045, 6, 24).rotateX(Math.PI / 2),
+      botTrim,
+    );
     beltR.position.y = 0.62;
     const head = new THREE.Mesh(new THREE.SphereGeometry(0.29, 14, 10), botMat);
     head.position.y = 1.12;
@@ -752,7 +985,9 @@ export function buildIsland(THREE, scene) {
     }
     grp.add(body, beltR, head, eye, dish, thr);
     grp.position.set(x, gy + 0.42, z);
-    grp.traverse((o) => { if (o.isMesh) o.castShadow = true; });
+    grp.traverse((o) => {
+      if (o.isMesh) o.castShadow = true;
+    });
     scene.add(grp);
     addGlowDisc(x, z, NEON_CYAN, 1.3);
     addSprite(glowCyan, x, gy + 1.3, z, 3.2, 0.4);
@@ -767,7 +1002,10 @@ export function buildIsland(THREE, scene) {
   }
 
   // 3) 能量核心 x2
-  const coreSpots = [[22, -20], [-26, -16]];
+  const coreSpots = [
+    [22, -20],
+    [-26, -16],
+  ];
   for (const [x, z] of coreSpots) {
     const gy = heightAt(x, z);
     const grp = new THREE.Group();
@@ -776,23 +1014,48 @@ export function buildIsland(THREE, scene) {
     pedestal.castShadow = true;
     const ringBase = new THREE.Mesh(
       new THREE.TorusGeometry(0.85, 0.04, 6, 28).rotateX(Math.PI / 2),
-      new THREE.MeshBasicMaterial({ color: NEON_MAGENTA, transparent: true, opacity: 0.7, blending: THREE.AdditiveBlending, depthWrite: false }),
+      new THREE.MeshBasicMaterial({
+        color: NEON_MAGENTA,
+        transparent: true,
+        opacity: 0.7,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      }),
     );
     ringBase.position.y = 0.5;
     const core = new THREE.Mesh(
       new THREE.OctahedronGeometry(0.55, 0),
-      new THREE.MeshStandardMaterial({ color: 0x220a16, emissive: NEON_MAGENTA, emissiveIntensity: 2.4, roughness: 0.2, metalness: 0.3 }),
+      new THREE.MeshStandardMaterial({
+        color: 0x220a16,
+        emissive: NEON_MAGENTA,
+        emissiveIntensity: 2.4,
+        roughness: 0.2,
+        metalness: 0.3,
+      }),
     );
     core.position.y = 1.25;
     core.castShadow = true;
     const inner = new THREE.Mesh(
       new THREE.OctahedronGeometry(0.32, 0),
-      new THREE.MeshBasicMaterial({ color: 0xff8dc0, transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false }),
+      new THREE.MeshBasicMaterial({
+        color: 0xff8dc0,
+        transparent: true,
+        opacity: 0.55,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      }),
     );
     inner.position.y = 1.25;
     const cage = new THREE.Mesh(
       new THREE.IcosahedronGeometry(0.95, 0),
-      new THREE.MeshBasicMaterial({ color: NEON_MAGENTA, transparent: true, opacity: 0.16, blending: THREE.AdditiveBlending, depthWrite: false, wireframe: true }),
+      new THREE.MeshBasicMaterial({
+        color: NEON_MAGENTA,
+        transparent: true,
+        opacity: 0.16,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        wireframe: true,
+      }),
     );
     cage.position.y = 1.25;
     grp.add(pedestal, ringBase, core, inner, cage);

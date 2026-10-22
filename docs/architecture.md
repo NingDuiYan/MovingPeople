@@ -24,20 +24,20 @@ index.html (importmap: "three" → ./libs/three.module.js)
 
 ## 启动流程(`scripts/main.js` 的 `boot()`,90-731)
 
-| 顺序 | 动作 | 关键参数 |
-|---|---|---|
-| 1 | 动态 `import('three')`,失败进 `fatal()` | importmap 解析到本地 r160 |
-| 2 | 创建 `WebGLRenderer` | `antialias`,`pixelRatio = min(dpr, 2)`,`shadowMap = PCFSoftShadowMap`,`toneMapping = NoToneMapping` |
-| 3 | 场景与雾:`FogExp2(0x12202c, 0.0015)`;相机 58° / near 0.1 / far 1200 | — |
-| 4 | `Sky` 大气散射 + 太阳主光 + 半球光 + 环境光 + 品红/青色补光 | 见 [rendering.md](rendering.md) |
-| 5 | `Water` 平面反射海面 + `PMREMGenerator` 用 Sky 生成环境贴图 | `environmentIntensity = 0.38` |
-| 6 | 音效:`createStepAudio()`,只读 `localStorage` 的开关,**不创建 AudioContext** | `neon-isle:sound` |
-| 7 | `buildIsland(THREE, scene)` → `{ interactives, obstacles, update }` | 见 [scene.md](scene.md) |
-| 8 | `buildPlayer(THREE, scene, stepAudio.footstep)`,出生点 (2, 2) | `heightAt(2, 2)` 贴地,朝向 `PI * 0.85` |
-| 9 | `createPostFX(...)` + `syncPostSize()`(按 drawingBuffer 尺寸) | HalfFloat + MSAA `min(2, maxSamples)` |
-| 10 | HUD:radar / status / prompt / dialog / toast / settings / joystick,读键位与偏好 | `readBinds()`、`readLookMode()`、`readSens()` |
-| 11 | 一次性音频解锁:`keydown`/`pointerdown`/`touchstart` 各 `{ once: true }` | 浏览器自动播放策略 |
-| 12 | 首帧揭幕:遮罩淡出 → 900ms 操作引导 → 1400ms 自动打开 R-7 对白 | `started` 标志保证只跑一次 |
+| 顺序 | 动作                                                                            | 关键参数                                                                                            |
+| ---- | ------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| 1    | 动态 `import('three')`,失败进 `fatal()`                                         | importmap 解析到本地 r160                                                                           |
+| 2    | 创建 `WebGLRenderer`                                                            | `antialias`,`pixelRatio = min(dpr, 2)`,`shadowMap = PCFSoftShadowMap`,`toneMapping = NoToneMapping` |
+| 3    | 场景与雾:`FogExp2(0x12202c, 0.0015)`;相机 58° / near 0.1 / far 1200             | —                                                                                                   |
+| 4    | `Sky` 大气散射 + 太阳主光 + 半球光 + 环境光 + 品红/青色补光                     | 见 [rendering.md](rendering.md)                                                                     |
+| 5    | `Water` 平面反射海面 + `PMREMGenerator` 用 Sky 生成环境贴图                     | `environmentIntensity = 0.38`                                                                       |
+| 6    | 音效:`createStepAudio()`,只读 `localStorage` 的开关,**不创建 AudioContext**     | `neon-isle:sound`                                                                                   |
+| 7    | `buildIsland(THREE, scene)` → `{ interactives, obstacles, update }`             | 见 [scene.md](scene.md)                                                                             |
+| 8    | `buildPlayer(THREE, scene, stepAudio.footstep)`,出生点 (2, 2)                   | `heightAt(2, 2)` 贴地,朝向 `PI * 0.85`                                                              |
+| 9    | `createPostFX(...)` + `syncPostSize()`(按 drawingBuffer 尺寸)                   | HalfFloat + MSAA `min(2, maxSamples)`                                                               |
+| 10   | HUD:radar / status / prompt / dialog / toast / settings / joystick,读键位与偏好 | `readBinds()`、`readLookMode()`、`readSens()`                                                       |
+| 11   | 一次性音频解锁:`keydown`/`pointerdown`/`touchstart` 各 `{ once: true }`         | 浏览器自动播放策略                                                                                  |
+| 12   | 首帧揭幕:遮罩淡出 → 900ms 操作引导 → 1400ms 自动打开 R-7 对白                   | `started` 标志保证只跑一次                                                                          |
 
 任何阶段抛错都会落到 `boot().catch()` → `fatal('启动失败: ...')`,由 `#fatal` 面板显示。
 

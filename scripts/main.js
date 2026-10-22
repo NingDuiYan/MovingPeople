@@ -1,5 +1,14 @@
 // ============ 主入口:渲染器 / 相机 / 输入 / 交互主循环 ============
-import { ISLAND_RADIUS, WATER_LEVEL, heightAt, clamp, damp, lerpAngle, WALK_SPEED, RUN_SPEED } from './utils.js';
+import {
+  ISLAND_RADIUS,
+  WATER_LEVEL,
+  heightAt,
+  clamp,
+  damp,
+  lerpAngle,
+  WALK_SPEED,
+  RUN_SPEED,
+} from './utils.js';
 import { buildIsland } from './island.js';
 import { buildPlayer } from './player.js';
 import { createStepAudio } from './audio.js';
@@ -12,7 +21,6 @@ import { createToast } from './ui/toast.js';
 import { createPostFX } from './postfx.js';
 import { Sky } from '../libs/objects/Sky.js';
 import { Water } from '../libs/objects/Water.js';
-import { GLTFLoader } from '../libs/loaders/GLTFLoader.js';
 
 const els = {
   canvas: document.getElementById('scene'),
@@ -54,7 +62,7 @@ function fatal(msg) {
 }
 
 const INTERACT_RADIUS = 3.2;
-const PLAYER_RADIUS = 0.36;   // 角色碰撞半径(m):与 GLB 身形匹配
+const PLAYER_RADIUS = 0.36; // 角色碰撞半径(m):与 GLB 身形匹配
 
 const dialogData = {
   npc: {
@@ -127,8 +135,8 @@ async function boot() {
   skyU.mieCoefficient.value = 0.012;
   skyU.mieDirectionalG.value = 0.86;
   // 黄昏低角度太阳(偏暖,与霓虹夜景融合)
-  const phi = THREE.MathUtils.degToRad(90 - 30);  // 太阳仰角 30°:地面获得有效照明,仍保留暖调
-  const theta = THREE.MathUtils.degToRad(205);     // 方位角
+  const phi = THREE.MathUtils.degToRad(90 - 30); // 太阳仰角 30°:地面获得有效照明,仍保留暖调
+  const theta = THREE.MathUtils.degToRad(205); // 方位角
   sun.setFromSphericalCoords(1, phi, theta);
   skyU.sunPosition.value.copy(sun);
 
@@ -150,7 +158,7 @@ async function boot() {
 
   // 天光环境(HI 半球冷暖)
   scene.add(new THREE.HemisphereLight(0x9fb8d2, 0x2b3038, 0.42));
-  scene.add(new THREE.AmbientLight(0x3d4a5c, 0.20));
+  scene.add(new THREE.AmbientLight(0x3d4a5c, 0.2));
 
   // 品红霓虹补光(保留赛博主题染色)
   const rim = new THREE.DirectionalLight(0xff2d95, 0.35);
@@ -163,7 +171,9 @@ async function boot() {
   scene.add(fill);
 
   // ---------- 写实海面:Water 平面反射 ----------
-  const waterNormals = await new THREE.TextureLoader().loadAsync('./libs/textures/waternormals.jpg');
+  const waterNormals = await new THREE.TextureLoader().loadAsync(
+    './libs/textures/waternormals.jpg',
+  );
   waterNormals.wrapS = waterNormals.wrapT = THREE.RepeatWrapping;
   const water = new Water(new THREE.PlaneGeometry(2200, 2200), {
     textureWidth: 256,
@@ -183,9 +193,9 @@ async function boot() {
   const pmrem = new THREE.PMREMGenerator(renderer);
   pmrem.compileEquirectangularShader();
   const skyEnvScene = new THREE.Scene();
-  skyEnvScene.add(sky);                       // 临时移入环境场景
+  skyEnvScene.add(sky); // 临时移入环境场景
   const envRT = pmrem.fromScene(skyEnvScene);
-  scene.add(sky);                             // 移回主场景
+  scene.add(sky); // 移回主场景
   scene.environment = envRT.texture;
   scene.environmentIntensity = 0.38;
   pmrem.dispose();
@@ -199,11 +209,11 @@ async function boot() {
   try {
     soundOn = localStorage.getItem(SOUND_KEY) !== '0';
   } catch (err) {
-    soundOn = true;   // 隐私模式 / 存储被禁用时用默认值
+    soundOn = true; // 隐私模式 / 存储被禁用时用默认值
   }
-  applySound(soundOn, false);   // 只同步状态:不写存储、不创建 AudioContext(等首次手势再解锁)
+  applySound(soundOn, false); // 只同步状态:不写存储、不创建 AudioContext(等首次手势再解锁)
 
-// ---------- 世界 ----------
+  // ---------- 世界 ----------
   const island = buildIsland(THREE, scene);
   const player = buildPlayer(THREE, scene, stepAudio.footstep);
   const playerPos = player.group.position;
@@ -225,7 +235,10 @@ async function boot() {
   const status = createStatus({ fpsEl: els.fps, posEl: els.pos });
   const prompt = createPrompt({ promptEl: els.prompt, nameEl: els.promptName });
   const dialog = createDialog({
-    root: els.dialog, nameEl: els.dialogName, textEl: els.dialogText, closeBtn: els.dialogClose,
+    root: els.dialog,
+    nameEl: els.dialogName,
+    textEl: els.dialogText,
+    closeBtn: els.dialogClose,
   });
   const toast = createToast({ root: els.msg, textEl: els.msgText });
 
@@ -235,13 +248,17 @@ async function boot() {
   function applySound(on, persist = true) {
     soundOn = !!on;
     stepAudio.setEnabled(soundOn);
-    if (soundOn) stepAudio.unlock();   // 由按键/点触触发,正处在用户手势里
+    if (soundOn) stepAudio.unlock(); // 由按键/点触触发,正处在用户手势里
     const label = soundOn ? '静音 (M)' : '开启音效 (M)';
     els.soundToggle.setAttribute('aria-pressed', String(soundOn));
     els.soundToggle.setAttribute('aria-label', label);
     els.soundToggle.title = label;
     if (!persist) return;
-    try { localStorage.setItem(SOUND_KEY, soundOn ? '1' : '0'); } catch (err) { /* 存储失败不影响使用 */ }
+    try {
+      localStorage.setItem(SOUND_KEY, soundOn ? '1' : '0');
+    } catch (err) {
+      /* 存储失败不影响使用 */
+    }
     toast.show(soundOn ? '音效:已开启' : '音效:已静音 · 按 M 恢复', 2400);
   }
 
@@ -260,7 +277,9 @@ async function boot() {
       const action = cap.getAttribute('data-bind');
       if (action === 'move') {
         // 四个移动键拼成一个键帽:全是单字符时直接连写(WASD / ↑←↓→),否则用 / 分隔
-        const parts = ['moveForward', 'moveLeft', 'moveBack', 'moveRight'].map((id) => codeToLabel(binds[id]));
+        const parts = ['moveForward', 'moveLeft', 'moveBack', 'moveRight'].map((id) =>
+          codeToLabel(binds[id]),
+        );
         cap.textContent = parts.every((s) => s.length === 1) ? parts.join('') : parts.join('/');
       } else if (binds[action]) {
         cap.textContent = codeToLabel(binds[action]);
@@ -275,10 +294,31 @@ async function boot() {
       toast.show('拖动左下摇杆移动 · 点右下 E 键交互', 5200);
       return;
     }
-    toast.show(lookMode === 'drag'
-      ? '按住鼠标左键拖动转视角,滚轮缩放'
-      : '点击画面进入全屏并锁定鼠标 · 移动鼠标环顾 · 按 Esc 显示鼠标', 4600);
-    toast.show(codeToLabel(binds.moveForward) + ' ' + codeToLabel(binds.moveLeft) + ' ' + codeToLabel(binds.moveBack) + ' ' + codeToLabel(binds.moveRight) + ' 移动 · ' + codeToLabel(binds.run) + ' 疾跑 · ' + codeToLabel(binds.interact) + ' 交互 · ' + codeToLabel(binds.settings) + ' 设置 · ' + codeToLabel(binds.sound) + ' 静音 · Esc 显示鼠标', 5200);
+    toast.show(
+      lookMode === 'drag'
+        ? '按住鼠标左键拖动转视角,滚轮缩放'
+        : '点击画面进入全屏并锁定鼠标 · 移动鼠标环顾 · 按 Esc 显示鼠标',
+      4600,
+    );
+    toast.show(
+      codeToLabel(binds.moveForward) +
+        ' ' +
+        codeToLabel(binds.moveLeft) +
+        ' ' +
+        codeToLabel(binds.moveBack) +
+        ' ' +
+        codeToLabel(binds.moveRight) +
+        ' 移动 · ' +
+        codeToLabel(binds.run) +
+        ' 疾跑 · ' +
+        codeToLabel(binds.interact) +
+        ' 交互 · ' +
+        codeToLabel(binds.settings) +
+        ' 设置 · ' +
+        codeToLabel(binds.sound) +
+        ' 静音 · Esc 显示鼠标',
+      5200,
+    );
   }
 
   // ---------- 触屏模式 ----------
@@ -286,10 +326,17 @@ async function boot() {
   const applyTouchMode = () => document.body.classList.toggle('touch-mode', touchMode);
   applyTouchMode();
   const joy = createJoystick(els.joystick, els.joyKnob);
-  window.addEventListener('touchstart', function onFirstTouch() {
-    if (!touchMode) { touchMode = true; applyTouchMode(); }
-    window.removeEventListener('touchstart', onFirstTouch);
-  }, { passive: true });
+  window.addEventListener(
+    'touchstart',
+    function onFirstTouch() {
+      if (!touchMode) {
+        touchMode = true;
+        applyTouchMode();
+      }
+      window.removeEventListener('touchstart', onFirstTouch);
+    },
+    { passive: true },
+  );
 
   // ---------- 键盘输入 ----------
   // 键位来自 binds(可在设置里改),这里只按动作名取键,不再写死具体键码
@@ -318,7 +365,7 @@ async function boot() {
       return;
     }
     if (e.code === binds.lookPause || e.code === mirrorCode(binds.lookPause)) {
-      e.preventDefault();   // 别让 Alt 把焦点交给浏览器菜单栏
+      e.preventDefault(); // 别让 Alt 把焦点交给浏览器菜单栏
       setLookPaused(true);
       return;
     }
@@ -327,7 +374,7 @@ async function boot() {
       toggleSettings();
       return;
     }
-    if (settings.isOpen()) return;   // 面板打开时其余按键归面板,不触发游戏操作
+    if (settings.isOpen()) return; // 面板打开时其余按键归面板,不触发游戏操作
     if (e.code === binds.sound) {
       e.preventDefault();
       applySound(!soundOn);
@@ -347,14 +394,17 @@ async function boot() {
     if (e.code === binds.lookPause || e.code === mirrorCode(binds.lookPause)) setLookPaused(false);
     keys.delete(e.code);
   });
-  window.addEventListener('blur', () => { keys.clear(); setLookPaused(false); });
+  window.addEventListener('blur', () => {
+    keys.clear();
+    setLookPaused(false);
+  });
 
   // ---------- 视角:桌面「鼠标自由转动」/ 触屏与拖拽模式「按住拖拽」 ----------
   // 自由视角用 Pointer Lock:点一下画面就把指针锁进画布,直接用移动量(movementX/Y)转视角。
   // 锁定后光标不会溜出窗口、也不会顶到屏幕边缘卡住,浏览器负责隐藏光标,画面上不画准星。
   // Esc 是浏览器原生的解锁方式,解锁后光标回到页面、可以正常点界面。
   const cam = { yaw: Math.PI * 0.85, pitch: 0.28, dist: 6.6, distTarget: 6.6 };
-  const LOOK_SENS_X = 0.0042;   // rad / px
+  const LOOK_SENS_X = 0.0042; // rad / px
   const LOOK_SENS_Y = 0.0032;
 
   // 鼠标灵敏度倍率:只影响转视角速度,不改变上下俯仰的限位
@@ -364,7 +414,7 @@ async function boot() {
       const v = Number(localStorage.getItem(SENS_KEY));
       return v >= 0.3 && v <= 2 ? v : 1;
     } catch (err) {
-      return 1;   // 隐私模式 / 存储被禁用时用默认值
+      return 1; // 隐私模式 / 存储被禁用时用默认值
     }
   }
 
@@ -374,7 +424,11 @@ async function boot() {
   function applySens(v, persist = true) {
     lookSens = clamp(Number(v) || 1, 0.3, 2);
     if (!persist) return;
-    try { localStorage.setItem(SENS_KEY, String(lookSens)); } catch (err) { /* 存储失败不影响使用 */ }
+    try {
+      localStorage.setItem(SENS_KEY, String(lookSens));
+    } catch (err) {
+      /* 存储失败不影响使用 */
+    }
   }
 
   function look(dx, dy) {
@@ -385,18 +439,24 @@ async function boot() {
   let drag = null;
   function startDrag(e) {
     drag = { id: e.pointerId, x: e.clientX, y: e.clientY };
-    try { els.canvas.setPointerCapture(e.pointerId); } catch (err) { /* 指针已抬起 */ }
+    try {
+      els.canvas.setPointerCapture(e.pointerId);
+    } catch (err) {
+      /* 指针已抬起 */
+    }
   }
 
   // ---------- 指针锁定 + 全屏:自由视角下把鼠标关进画布 ----------
-  let locked = false;         // 指针当前是否锁在画布上
+  let locked = false; // 指针当前是否锁在画布上
 
   function lockPointer() {
     try {
       const ret = els.canvas.requestPointerLock();
       // 浏览器拒绝时(刚按过 Esc、不处在用户手势里)静默退回按住拖拽,不弹错
       if (ret && typeof ret.catch === 'function') ret.catch(() => {});
-    } catch (err) { /* 个别浏览器不合格时会直接抛,同样退回拖拽 */ }
+    } catch (err) {
+      /* 个别浏览器不合格时会直接抛,同样退回拖拽 */
+    }
   }
 
   /**
@@ -405,9 +465,12 @@ async function boot() {
    * 全屏请求被拒也照样锁定,只是那条气泡留着。
    */
   function requestLock() {
-    if (locked || lookMode !== 'free' || touchMode || settings.isOpen()) return;   // 面板开着时别把光标藏起来
+    if (locked || lookMode !== 'free' || touchMode || settings.isOpen()) return; // 面板开着时别把光标藏起来
     const root = document.documentElement;
-    if (document.fullscreenElement || !root.requestFullscreen) { lockPointer(); return; }
+    if (document.fullscreenElement || !root.requestFullscreen) {
+      lockPointer();
+      return;
+    }
     Promise.resolve()
       .then(() => root.requestFullscreen({ navigationUI: 'hide' }))
       .catch(() => {})
@@ -438,7 +501,10 @@ async function boot() {
     if (lookPaused === on) return;
     lookPaused = on;
     document.body.classList.toggle('look-paused', on);
-    if (on) { releaseLock(); return; }
+    if (on) {
+      releaseLock();
+      return;
+    }
     // 松开 Alt 立刻锁回去;浏览器不给锁(不在手势里)时安静退回点画面锁定
     if (document.hasFocus()) requestLock();
   }
@@ -449,7 +515,7 @@ async function boot() {
     try {
       return localStorage.getItem(LOOK_MODE_KEY) === 'drag' ? 'drag' : 'free';
     } catch (err) {
-      return 'free';   // 隐私模式 / 存储被禁用时用默认值
+      return 'free'; // 隐私模式 / 存储被禁用时用默认值
     }
   }
 
@@ -458,13 +524,20 @@ async function boot() {
   /** 应用视角模式;persist=false 用于启动时同步 UI,不回写存储 */
   function applyLookMode(mode, persist = true) {
     lookMode = mode === 'drag' ? 'drag' : 'free';
-    document.body.classList.toggle('look-drag', lookMode === 'drag');   // 只用来切换光标样式
-    if (lookMode !== 'free') releaseLock();                             // 拖拽模式不需要锁定指针
-    if (!persist) return;   // 启动时只同步状态,不弹提示
-    try { localStorage.setItem(LOOK_MODE_KEY, lookMode); } catch (err) { /* 存储失败不影响使用 */ }
-    toast.show(lookMode === 'drag'
-      ? '视角方式:按住拖拽 · 转视角需按住左键'
-      : '视角方式:鼠标自由转动 · 移动鼠标即可环顾', 3200);
+    document.body.classList.toggle('look-drag', lookMode === 'drag'); // 只用来切换光标样式
+    if (lookMode !== 'free') releaseLock(); // 拖拽模式不需要锁定指针
+    if (!persist) return; // 启动时只同步状态,不弹提示
+    try {
+      localStorage.setItem(LOOK_MODE_KEY, lookMode);
+    } catch (err) {
+      /* 存储失败不影响使用 */
+    }
+    toast.show(
+      lookMode === 'drag'
+        ? '视角方式:按住拖拽 · 转视角需按住左键'
+        : '视角方式:鼠标自由转动 · 移动鼠标即可环顾',
+      3200,
+    );
   }
 
   const settings = createSettings({
@@ -486,31 +559,48 @@ async function boot() {
     hintEl: els.keyHint,
     notify: (text, ms) => toast.show(text, ms),
     onOpenChange: (open) => {
-      if (open) { releaseLock(); return; }   // 面板要拿鼠标点,先把光标还给用户
-      keys.clear();   // 面板关掉时清空按键集合,免得残留的按住状态继续带着人走
+      if (open) {
+        releaseLock();
+        return;
+      } // 面板要拿鼠标点,先把光标还给用户
+      keys.clear(); // 面板关掉时清空按键集合,免得残留的按住状态继续带着人走
       setLookPaused(false);
     },
   });
   applyLookMode(lookMode, false);
 
-  function toggleSettings() { settings.toggle(); }
+  function toggleSettings() {
+    settings.toggle();
+  }
 
   els.canvas.addEventListener('pointerdown', (e) => {
-    if (e.button === 2) return;   // 右键暂不承载任何操作:不锁指针、不开始拖拽(系统菜单已由 contextmenu 屏蔽)
-    if (lookMode === 'drag' || e.pointerType !== 'mouse') { startDrag(e); return; }
+    if (e.button === 2) return; // 右键暂不承载任何操作:不锁指针、不开始拖拽(系统菜单已由 contextmenu 屏蔽)
+    if (lookMode === 'drag' || e.pointerType !== 'mouse') {
+      startDrag(e);
+      return;
+    }
     // 自由视角:点一下画面就把指针锁进去,光标从此进不了页面、也甩不出窗口
-    if (!locked && !lookPaused) { requestLock(); startDrag(e); }   // 锁定被拒时,按住拖拽照样能转视角
+    if (!locked && !lookPaused) {
+      requestLock();
+      startDrag(e);
+    } // 锁定被拒时,按住拖拽照样能转视角
   });
   els.canvas.addEventListener('pointermove', (e) => {
     // 自由视角:吃浏览器给的移动量。锁定时和光标位置无关,没锁定时也一样转
     if (lookMode === 'free' && e.pointerType === 'mouse') {
-      if (e.movementX === undefined) { startDrag(e); return; }   // 老浏览器拿不到移动量,退回拖拽
+      if (e.movementX === undefined) {
+        startDrag(e);
+        return;
+      } // 老浏览器拿不到移动量,退回拖拽
       if (!lookPaused) look(e.movementX, e.movementY || 0);
       return;
     }
     // 拖拽模式 / 触屏:按住才转
     if (!drag || e.pointerId !== drag.id) return;
-    if (e.buttons === 0) { drag = null; return; }   // 兜底:漏掉 pointerup 时不让视角自己转
+    if (e.buttons === 0) {
+      drag = null;
+      return;
+    } // 兜底:漏掉 pointerup 时不让视角自己转
     look(e.clientX - drag.x, e.clientY - drag.y);
     drag.x = e.clientX;
     drag.y = e.clientY;
@@ -522,16 +612,20 @@ async function boot() {
   };
   els.canvas.addEventListener('pointerup', endDrag);
   els.canvas.addEventListener('pointercancel', endDrag);
-  els.canvas.addEventListener('wheel', (e) => {
-    e.preventDefault();
-    cam.distTarget = clamp(cam.distTarget + e.deltaY * 0.008, 3.2, 14);
-  }, { passive: false });
+  els.canvas.addEventListener(
+    'wheel',
+    (e) => {
+      e.preventDefault();
+      cam.distTarget = clamp(cam.distTarget + e.deltaY * 0.008, 3.2, 14);
+    },
+    { passive: false },
+  );
   els.canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 
   // ---------- 交互 ----------
   let nearTarget = null;
   function onInteract() {
-    if (settings.isOpen()) return;   // 设置面板打开时不触发交互
+    if (settings.isOpen()) return; // 设置面板打开时不触发交互
     if (dialog.isOpen()) {
       dialog.advance();
       return;
@@ -604,7 +698,7 @@ async function boot() {
         }
         hit = true;
       }
-      if (!hit) break;   // 没有穿透就不用再迭代
+      if (!hit) break; // 没有穿透就不用再迭代
     }
   }
 
@@ -630,7 +724,10 @@ async function boot() {
     let ix = (isDown('moveRight') ? 1 : 0) - (isDown('moveLeft') ? 1 : 0) + joy.vec.x;
     let iy = (isDown('moveForward') ? 1 : 0) - (isDown('moveBack') ? 1 : 0) + joy.vec.y;
     const len = Math.hypot(ix, iy);
-    if (len > 1) { ix /= len; iy /= len; }
+    if (len > 1) {
+      ix /= len;
+      iy /= len;
+    }
     const active = len > 0.08;
     const run = isDown('run');
 
@@ -655,7 +752,7 @@ async function boot() {
       clampToIsland(playerPos);
       // 岩石/晶簇/塔/集装箱/装置挡人,否则会整个走进模型里
       resolveObstacles(playerPos, heightAt(playerPos.x, playerPos.z));
-      clampToIsland(playerPos);   // 被推出后仍需留在能量边界内
+      clampToIsland(playerPos); // 被推出后仍需留在能量边界内
       // 夹在晶簇这种重叠小圆的缝隙里时,逐圆推出会互相打架、几帧内收敛不了,
       // 此时退回上一帧的位置(上一帧位置由归纳法保证是合法的),绝不留在实心体内
       if (penetrationAt(playerPos, heightAt(playerPos.x, playerPos.z)) > 1e-3) {
@@ -704,7 +801,10 @@ async function boot() {
       const dx = p.pos.x - playerPos.x;
       const dz = p.pos.z - playerPos.z;
       const d2 = dx * dx + dz * dz;
-      if (d2 < bestD2) { bestD2 = d2; nearTarget = p; }
+      if (d2 < bestD2) {
+        bestD2 = d2;
+        nearTarget = p;
+      }
     }
     if (nearTarget && !dialog.isOpen()) prompt.show(nearTarget.name);
     else prompt.hide();

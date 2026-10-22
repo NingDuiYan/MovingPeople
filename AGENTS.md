@@ -26,17 +26,17 @@ python -m http.server 5173   # 或 npx serve .
 
 ## 目录与模块职责
 
-| 文件 | 职责 | 不该放什么 |
-|---|---|---|
-| `scripts/main.js` | 唯一的入口:渲染器/光照/相机/输入/碰撞/主循环/对白数据 | 场景几何、UI 细节实现 |
-| `scripts/island.js` | 世界生成,返回 `{ interactives, obstacles, update }` | 输入、相机、DOM |
-| `scripts/player.js` | 角色模型 + 骨骼动画 + 尘土,暴露 `update(dt, speed, t, turnRate, backpedal)` | 移动计算(位移由 main.js 算) |
-| `scripts/postfx.js` | 后期处理管线,暴露 `{ setSize, render, uniforms }` | 场景内容 |
-| `scripts/audio.js` | 程序化脚步音效(懒初始化 AudioContext) | 播放策略 / 用户手势判断(在 main.js) |
-| `scripts/keybinds.js` | 键位纯数据层:默认值、存储、冲突互换、预设 | 任何 DOM 操作 |
-| `scripts/assets.js` | Canvas 程序化贴图工厂 | 场景布局 |
-| `scripts/utils.js` | 常量、`heightAt`、数学工具 | 有状态的东西 |
-| `scripts/ui/*.js` | 各 HUD 组件,均返回 `{ ... }` 方法对象,**不 import three** | 游戏逻辑 |
+| 文件                  | 职责                                                                        | 不该放什么                          |
+| --------------------- | --------------------------------------------------------------------------- | ----------------------------------- |
+| `scripts/main.js`     | 唯一的入口:渲染器/光照/相机/输入/碰撞/主循环/对白数据                       | 场景几何、UI 细节实现               |
+| `scripts/island.js`   | 世界生成,返回 `{ interactives, obstacles, update }`                         | 输入、相机、DOM                     |
+| `scripts/player.js`   | 角色模型 + 骨骼动画 + 尘土,暴露 `update(dt, speed, t, turnRate, backpedal)` | 移动计算(位移由 main.js 算)         |
+| `scripts/postfx.js`   | 后期处理管线,暴露 `{ setSize, render, uniforms }`                           | 场景内容                            |
+| `scripts/audio.js`    | 程序化脚步音效(懒初始化 AudioContext)                                       | 播放策略 / 用户手势判断(在 main.js) |
+| `scripts/keybinds.js` | 键位纯数据层:默认值、存储、冲突互换、预设                                   | 任何 DOM 操作                       |
+| `scripts/assets.js`   | Canvas 程序化贴图工厂                                                       | 场景布局                            |
+| `scripts/utils.js`    | 常量、`heightAt`、数学工具                                                  | 有状态的东西                        |
+| `scripts/ui/*.js`     | 各 HUD 组件,均返回 `{ ... }` 方法对象,**不 import three**                   | 游戏逻辑                            |
 
 依赖方向单向:`main.js` → 各模块 → `utils.js` / `assets.js` / `keybinds.js`。模块之间不要互相 import(除 `player.js` 引 `utils.js` 的常量)。
 
@@ -67,13 +67,13 @@ python -m http.server 5173   # 或 npx serve .
 
 ## 常见改动指引
 
-| 想做的事 | 改哪里 |
-|---|---|
-| 加一个可交互物件 | `island.js:666` 起的交互物段落 → `dialogData`(`main.js:59`)→ 必要时 `addObstacle` |
-| 调整小岛形态 | `utils.js` 的 `heightAt`(会同时影响地形网格、碰撞、雷达) |
-| 加一种 HUD 元素 | `index.html` 加 DOM + `hud.css` 加样式(用 `--c-*` token)+ `scripts/ui/` 新组件 + `main.js` 的 `els` |
-| 调画质 / 氛围 | `postfx.js` 的 uniforms 表、`main.js` 的曝光与光照参数 |
-| 加音效 | `audio.js` 复用 `burst()`,注意 `ensure()` 仍要懒初始化 |
-| 加键位动作 | `keybinds.js` 的 `KEY_ACTIONS` + `main.js` 的 `keydown` 分支 + 需要时补 `data-bind` 键帽 |
+| 想做的事         | 改哪里                                                                                              |
+| ---------------- | --------------------------------------------------------------------------------------------------- |
+| 加一个可交互物件 | `island.js:666` 起的交互物段落 → `dialogData`(`main.js:59`)→ 必要时 `addObstacle`                   |
+| 调整小岛形态     | `utils.js` 的 `heightAt`(会同时影响地形网格、碰撞、雷达)                                            |
+| 加一种 HUD 元素  | `index.html` 加 DOM + `hud.css` 加样式(用 `--c-*` token)+ `scripts/ui/` 新组件 + `main.js` 的 `els` |
+| 调画质 / 氛围    | `postfx.js` 的 uniforms 表、`main.js` 的曝光与光照参数                                              |
+| 加音效           | `audio.js` 复用 `burst()`,注意 `ensure()` 仍要懒初始化                                              |
+| 加键位动作       | `keybinds.js` 的 `KEY_ACTIONS` + `main.js` 的 `keydown` 分支 + 需要时补 `data-bind` 键帽            |
 
 详细说明见 [`docs/`](docs/README.md)。

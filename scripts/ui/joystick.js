@@ -10,10 +10,10 @@ export function createJoystick(root, knob) {
   let originY = 0;
 
   function reset() {
-    vec.x = 0; vec.y = 0;
+    vec.x = 0;
+    vec.y = 0;
     pid = null;
     knob.style.transform = '';
-
   }
 
   root.addEventListener('pointerdown', (e) => {
