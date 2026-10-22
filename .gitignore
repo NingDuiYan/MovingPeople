@@ -3,6 +3,7 @@ node_modules/
 dist/
 coverage/
 .npm-cache/
+.tmp/
 
 # 本地 Python 运行时
 Python/

@@ -1,15 +1,8 @@
 import js from '@eslint/js';
 import globals from 'globals';
 
-/** 第三方与产物目录不参与检查:libs/ 在 Vite 迁移后会被删除。 */
-const IGNORED = [
-  'node_modules/**',
-  'dist/**',
-  'coverage/**',
-  '.npm-cache/**',
-  'libs/**',
-  'public/**',
-];
+/** 第三方与产物目录不参与检查(public/ 只有二进制资产)。 */
+const IGNORED = ['node_modules/**', 'dist/**', 'coverage/**', '.npm-cache/**', 'public/**'];
 
 export default [
   { ignores: IGNORED },

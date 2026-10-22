@@ -7,6 +7,12 @@ export const WALK_SPEED = 2.4; // 常速 m/s(人类快步量级,配合骨骼步�
 export const RUN_SPEED = 6.0; // 疾跑 m/s
 
 export const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+
+/**
+ * 静态资产 URL:public/ 下的文件按 Vite 的 BASE_URL 拼接。
+ * BASE_URL 以 '/' 结尾,dev 为 '/',build 为相对基址,子目录部署也不会拼错。
+ */
+export const assetUrl = (path) => `${import.meta.env.BASE_URL}${path}`;
 export const lerp = (a, b, t) => a + (b - a) * t;
 /** 帧率无关阻尼插值 */
 export const damp = (a, b, lambda, dt) => lerp(a, b, 1 - Math.exp(-lambda * dt));

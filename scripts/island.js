@@ -3,7 +3,7 @@
 // [写实化] 天穹与海面由 main.js 的 Sky(大气散射)/Water(平面反射)接管
 // [写实化] 地形叠加真实草地 PBR 贴图
 // [碰撞] 实心道具登记到 obstacles,由 main.js 把角色挡在体外
-import { ISLAND_RADIUS, heightAt, rng, clamp } from './utils.js';
+import { ISLAND_RADIUS, heightAt, rng, clamp, assetUrl } from './utils.js';
 import { makeGlowTexture, makeWindowTexture, makeSignTexture, makeDotTexture } from './assets.js';
 
 const NEON_CYAN = 0x00f0ff;
@@ -191,7 +191,7 @@ export function buildIsland(THREE, scene) {
   geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
   geo.computeVertexNormals();
   // 写实草地纹理(three.js 官方示例贴图),按顶点色调制以保留沙/岩/草分层
-  const grassTex = new THREE.TextureLoader().load('./libs/textures/grasslight-big.jpg');
+  const grassTex = new THREE.TextureLoader().load(assetUrl('textures/grasslight-big.jpg'));
   grassTex.wrapS = grassTex.wrapT = THREE.RepeatWrapping;
   grassTex.repeat.set(26, 26);
   grassTex.colorSpace = THREE.SRGBColorSpace;

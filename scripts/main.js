@@ -6,6 +6,7 @@ import {
   clamp,
   damp,
   lerpAngle,
+  assetUrl,
   WALK_SPEED,
   RUN_SPEED,
 } from './utils.js';
@@ -19,8 +20,9 @@ import { createSettings } from './ui/settings.js';
 import { readBinds, codeToLabel, mirrorCode } from './keybinds.js';
 import { createToast } from './ui/toast.js';
 import { createPostFX } from './postfx.js';
-import { Sky } from '../libs/objects/Sky.js';
-import { Water } from '../libs/objects/Water.js';
+import * as THREE from 'three';
+import { Sky } from 'three/examples/jsm/objects/Sky.js';
+import { Water } from 'three/examples/jsm/objects/Water.js';
 
 const els = {
   canvas: document.getElementById('scene'),
@@ -96,14 +98,6 @@ const dialogData = {
 };
 
 async function boot() {
-  let THREE;
-  try {
-    THREE = await import('three');
-  } catch (err) {
-    fatal('无法加载 Three.js(CDN 需联网): ' + err.message);
-    return;
-  }
-
   let renderer;
   try {
     renderer = new THREE.WebGLRenderer({ canvas: els.canvas, antialias: true });
@@ -172,7 +166,7 @@ async function boot() {
 
   // ---------- 写实海面:Water 平面反射 ----------
   const waterNormals = await new THREE.TextureLoader().loadAsync(
-    './libs/textures/waternormals.jpg',
+    assetUrl('textures/waternormals.jpg'),
   );
   waterNormals.wrapS = waterNormals.wrapT = THREE.RepeatWrapping;
   const water = new Water(new THREE.PlaneGeometry(2200, 2200), {

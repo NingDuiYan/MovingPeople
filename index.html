@@ -18,7 +18,7 @@
       rel="icon"
       href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='9' fill='%2300f0ff'/%3E%3C/svg%3E"
     />
-    <link rel="stylesheet" href="./styles/hud.css?v=13" />
+    <link rel="stylesheet" href="/styles/hud.css" />
   </head>
   <body>
     <noscript><p class="noscript">需要启用 JavaScript 才能接入岛屿数据链。</p></noscript>
@@ -300,14 +300,7 @@
       </div>
     </div>
 
-    <script type="importmap">
-      {
-        "imports": {
-          "three": "./libs/three.module.js"
-        }
-      }
-    </script>
-    <!-- ?v= 用于击穿浏览器缓存:改动脚本后把版本号 +1,避免旧 main.js 继续运行 -->
-    <script type="module" src="./scripts/main.js?v=13"></script>
+    <!-- 入口由 Vite 处理:dev 走 ESM 直连,build 走打包产出;不再需要 importmap 与手动版本号 -->
+    <script type="module" src="/scripts/main.js"></script>
   </body>
 </html>

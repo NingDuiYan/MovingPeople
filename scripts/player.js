@@ -1,9 +1,9 @@
 // ============ 小人:GLB 写实士兵 + 骨骼动画 ============
-// 资产:libs/models/Soldier.glb(three.js 官方示例模型,含 Idle/Walk/Run 骨骼动画)
+// 资产:public/models/Soldier.glb(three.js 官方示例模型,含 Idle/Walk/Run 骨骼动画)
 // 未加载完成前用简单占位胶囊,加载后无缝替换进同一 group,避免坐标/相机突变。
 
-import { GLTFLoader } from '../libs/loaders/GLTFLoader.js';
-import { WALK_SPEED, RUN_SPEED } from './utils.js';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { WALK_SPEED, RUN_SPEED, assetUrl } from './utils.js';
 
 /**
  * @param {(strength: number, running: boolean) => void} [onStep]
@@ -48,7 +48,7 @@ export function buildPlayer(THREE, scene, onStep = null) {
   let __clips = [];
 
   new GLTFLoader().load(
-    './libs/models/Soldier.glb',
+    assetUrl('models/Soldier.glb'),
     (gltf) => {
       model = gltf.scene;
       model.scale.setScalar(1.05); // 与场景比例匹配
