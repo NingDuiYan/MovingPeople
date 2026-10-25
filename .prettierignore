@@ -7,3 +7,9 @@ package-lock.json
 *.glb
 *.jpg
 *.png
+
+# 第三方产物:DRACOLoader 解码器是原样拷来的,格式化只会制造无意义的 diff
+public/draco/
+
+# Blender 作业层生成的日志/摘要
+wasteland-blender/shots/jobs/

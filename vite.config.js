@@ -4,6 +4,7 @@ export default defineConfig({
   // 相对基址:dist/ 可以放在任意子目录或静态托管上直接打开
   base: './',
   server: {
+    host: '0.0.0.0',
     port: 5173,
     open: false,
   },

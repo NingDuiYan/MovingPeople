@@ -1,9 +1,9 @@
 {
-  "name": "neon-isle",
-  "version": "0.2.0",
+  "name": "wasteland-scene",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "霓虹孤岛 NEON ISLE — Three.js 赛博朋克 3D 探索 Demo",
+  "description": "废土场景静态模型预览 — Three.js 加载 public/models/wasteland_scene.glb",
   "engines": {
     "node": ">=18"
   },
